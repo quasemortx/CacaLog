@@ -1,31 +1,21 @@
-from pydantic_settings import BaseSettings
+from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    EVOLUTION_BASE_URL: str
-    EVOLUTION_INSTANCE: str
-    EVOLUTION_TOKEN: str
-    WHATSAPP_GROUP_ID: str
-    WHATSAPP_CMD_GROUP_ID: str | None = None  # Group for Commands Only (/help, /status)
-    WHATSAPP_ADMIN_ID: str | None = None  # Optional ID for private commands (Note to self)
+    model_config = SettingsConfigDict(env_file=".env", extra="ignore")
 
-    GOOGLE_SHEETS_ID: str
-    GOOGLE_WORKSHEET_INVENTARIO: str = "Inventario"
-    GOOGLE_WORKSHEET_HISTORICO: str = "Historico"
-    GOOGLE_SERVICE_ACCOUNT_JSON_PATH: str
+    # Tokens e acessos
+    webhook_token: str = "CHANGE_ME"
+    admin_phone: str | None = None
 
-    LOG_LEVEL: str = "INFO"
+    # Evolution API / WhatsApp / Outros (mantendo retrocompatibilidade do que o sistema já usava)
+    base_url: str | None = None
+    evolution_api_key: str | None = None
+    whatsapp_instance: str | None = None
 
-    # Evolution v2 optional/new fields
-    AUTHENTICATION_API_KEY: str | None = None
-    DATABASE_CONNECTION_URI: str | None = None
-    CACHE_REDIS_URI: str | None = None
-    WEBHOOK_URL: str | None = None
-
-    class Config:
-        env_file = ".env"
-        env_file_encoding = "utf-8"
-        extra = "ignore"  # Allow extra fields in .env without error
+    # Sheets
+    google_credentials_path: str = "credentials.json"
+    google_sheet_id: str = ""
 
 
 settings = Settings()

@@ -1,10 +1,11 @@
-from fastapi import BackgroundTasks, FastAPI, Request
+from fastapi import BackgroundTasks, Depends, FastAPI, Request
 
 from app.commands import handle_command
 from app.config import settings
 from app.logging_conf import configure_logging, logger
 from app.models import HistoryItem, InventoryItem, Status, TipoAmbiente
 from app.parser import REGEX_LAB, REGEX_SALA, extract_data_regex, normalize_status
+from app.security import require_webhook_token
 from app.sheets import SheetsClient
 from app.utils import classify_sector, get_current_timestamp, sanitize_for_sheets
 from app.whatsapp import send_message
@@ -41,7 +42,9 @@ async def webhook_test():
 
 
 @app.post("/webhook")
-async def webhook(request: Request, background_tasks: BackgroundTasks):
+async def webhook(
+    request: Request, background_tasks: BackgroundTasks, _: None = Depends(require_webhook_token)
+):
     print("DEBUG: Webhook endpoint hit!")  # Force stdout
     logger.info("⚡ Webhook Request Received!")
     try:
