@@ -6,6 +6,12 @@ target-version = ["py311"]
 line-length = 100
 target-version = "py311"
 fix = true
+exclude = [
+    ".agent",
+    ".venv",
+    "dist",
+    "build"
+]
 
 [tool.ruff.lint]
 select = ["E", "F", "I", "B", "UP", "SIM", "RUF"]
