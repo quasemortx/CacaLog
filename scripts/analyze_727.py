@@ -49,7 +49,7 @@ def analyze_727():
             break
 
     if target_msg:
-        print(f"\n📂 Found Message Block:\n{'-'*20}\n{target_msg['body']}\n{'-'*20}")
+        print(f"\n📂 Found Message Block:\n{'-' * 20}\n{target_msg['body']}\n{'-' * 20}")
 
         print("\n⚙️ Running Parser on this block...")
         results = extract_data_regex(target_msg["body"])

@@ -114,7 +114,9 @@ class SheetsClient:
             if cell:
                 # Update existing
                 cell_range = f"A{cell.row}:Q{cell.row}"
-                retry_sync(lambda: self.inventory_ws.update(range_name=cell_range, values=[row_data]))
+                retry_sync(
+                    lambda: self.inventory_ws.update(range_name=cell_range, values=[row_data])
+                )
             else:
                 # Insert new
                 retry_sync(lambda: self.inventory_ws.append_row(row_data))
@@ -130,7 +132,9 @@ class SheetsClient:
     def sort_inventory(self):
         try:
             # Sort by Predio (3), Andar (4), Sala (2)
-            retry_sync(lambda: self.inventory_ws.sort((3, "asc"), (4, "asc"), (2, "asc"), range="A2:O1000"))
+            retry_sync(
+                lambda: self.inventory_ws.sort((3, "asc"), (4, "asc"), (2, "asc"), range="A2:O1000")
+            )
         except Exception as e:
             logger.warning(f"Sorting failed (api limit or other): {e}")
 

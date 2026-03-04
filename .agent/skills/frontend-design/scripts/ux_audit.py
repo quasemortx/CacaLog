@@ -430,7 +430,7 @@ class UXAuditor:
             diff = abs(weight_values[i] - weight_values[i + 1])
             if diff == 100:
                 self.warnings.append(
-                    f"[Typography] {filename}: Adjacent font weights ({weight_values[i]}/{weight_values[i+1]}). Skip at least 2 levels for contrast."
+                    f"[Typography] {filename}: Adjacent font weights ({weight_values[i]}/{weight_values[i + 1]}). Skip at least 2 levels for contrast."
                 )
 
         # Too many weight levels

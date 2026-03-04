@@ -42,9 +42,9 @@ class Colors:
 
 
 def print_header(text: str):
-    print(f"\n{Colors.BOLD}{Colors.CYAN}{'='*70}{Colors.ENDC}")
+    print(f"\n{Colors.BOLD}{Colors.CYAN}{'=' * 70}{Colors.ENDC}")
     print(f"{Colors.BOLD}{Colors.CYAN}{text.center(70)}{Colors.ENDC}")
-    print(f"{Colors.BOLD}{Colors.CYAN}{'='*70}{Colors.ENDC}\n")
+    print(f"{Colors.BOLD}{Colors.CYAN}{'=' * 70}{Colors.ENDC}\n")
 
 
 def print_step(text: str):
@@ -184,7 +184,10 @@ def run_script(name: str, script_path: Path, project_path: str, url: str | None 
     # Run
     try:
         result = subprocess.run(
-            cmd, capture_output=True, text=True, timeout=600  # 10 minute timeout for slow checks
+            cmd,
+            capture_output=True,
+            text=True,
+            timeout=600,  # 10 minute timeout for slow checks
         )
 
         duration = (datetime.now() - start_time).total_seconds()
