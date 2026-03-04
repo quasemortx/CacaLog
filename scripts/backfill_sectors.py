@@ -1,6 +1,6 @@
-import sys
-import os
 import logging
+import os
+import sys
 
 # Add parent directory to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
@@ -11,17 +11,19 @@ from app.utils import classify_sector
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger("backfill_sector")
 
+
 def main():
     logger.info("Initializing Sheets Client...")
     sheets = SheetsClient()
     ws = sheets.inventory_ws
-    
+
     logger.info("Fetching all records (values)...")
     all_values = ws.get_all_values()
-    if not all_values: return
-    
+    if not all_values:
+        return
+
     headers = all_values[0]
-    
+
     # Check if Setor exists
     if "Setor" in headers:
         idx_setor = headers.index("Setor")
@@ -31,10 +33,10 @@ def main():
         logger.info("Inserting 'Setor' column at index 12...")
         # Target Header Structure: ... Status(10), Observacao(11), Setor(12), UltimoResponsavel(13) ...
         # Current: ... Observacao(11), UltimoResponsavel(12) ...
-        
+
         # Insert in Header
         headers.insert(12, "Setor")
-        
+
         # Insert in all rows
         for i in range(1, len(all_values)):
             # Pad row if short
@@ -42,7 +44,7 @@ def main():
                 all_values[i].append("")
             # Insert empty/calc value
             all_values[i].insert(12, "")
-            
+
         idx_setor = 12
 
     try:
@@ -53,31 +55,33 @@ def main():
         return
 
     updated_count = 0
-    
+
     # Recalculate Logic
     for i in range(1, len(all_values)):
         row = all_values[i]
-        
+
         # Safety check length
-        if len(row) <= idx_status or len(row) <= idx_obs: continue
-        
+        if len(row) <= idx_status or len(row) <= idx_obs:
+            continue
+
         status = row[idx_status]
         obs = row[idx_obs]
         current_val = row[idx_setor]
-        
+
         new_val = classify_sector(status, obs)
-        
+
         if new_val != current_val:
             row[idx_setor] = new_val
             updated_count += 1
-            
-    if updated_count > 0 or "Setor" not in headers: # Save if we updated rows OR structure
+
+    if updated_count > 0 or "Setor" not in headers:  # Save if we updated rows OR structure
         logger.info(f"Updating sheet (Structure+Values)... {updated_count} rows changed.")
-        ws.clear() # Safer to clear and rewrite for structure change
+        ws.clear()  # Safer to clear and rewrite for structure change
         ws.update(range_name="A1", values=all_values)
         logger.info("Sheet structure and data updated.")
     else:
         logger.info("No changes needed.")
+
 
 if __name__ == "__main__":
     main()

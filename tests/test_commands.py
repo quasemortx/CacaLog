@@ -1,5 +1,7 @@
+from unittest.mock import MagicMock
+
 import pytest
-from unittest.mock import MagicMock, patch
+
 from app.commands import handle_command
 
 

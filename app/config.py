@@ -1,13 +1,13 @@
-import os
 from pydantic_settings import BaseSettings
+
 
 class Settings(BaseSettings):
     EVOLUTION_BASE_URL: str
     EVOLUTION_INSTANCE: str
     EVOLUTION_TOKEN: str
     WHATSAPP_GROUP_ID: str
-    WHATSAPP_CMD_GROUP_ID: str | None = None # Group for Commands Only (/help, /status)
-    WHATSAPP_ADMIN_ID: str | None = None # Optional ID for private commands (Note to self)
+    WHATSAPP_CMD_GROUP_ID: str | None = None  # Group for Commands Only (/help, /status)
+    WHATSAPP_ADMIN_ID: str | None = None  # Optional ID for private commands (Note to self)
 
     GOOGLE_SHEETS_ID: str
     GOOGLE_WORKSHEET_INVENTARIO: str = "Inventario"
@@ -25,6 +25,7 @@ class Settings(BaseSettings):
     class Config:
         env_file = ".env"
         env_file_encoding = "utf-8"
-        extra = "ignore" # Allow extra fields in .env without error
+        extra = "ignore"  # Allow extra fields in .env without error
+
 
 settings = Settings()
