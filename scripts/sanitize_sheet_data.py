@@ -56,9 +56,9 @@ def main():
                 if current_status == "NAO_AVALIADO" and any(
                     x in obs_lower for x in ["atualizando", "verificando", "🔄", "aguarde"]
                 ):
-                        print(f"Row {i}: Migrating Status -> ATUALIZANDO")
-                        row[status_index] = "ATUALIZANDO"
-                        updates_made += 1
+                    print(f"Row {i}: Migrating Status -> ATUALIZANDO")
+                    row[status_index] = "ATUALIZANDO"
+                    updates_made += 1
 
         print(f"Total cell updates prepared: {updates_made}")
 

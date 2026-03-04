@@ -254,6 +254,7 @@ async def process_message(
             if existing_item:
                 if current_status == Status.NAO_AVALIADO:
                     import contextlib
+
                     with contextlib.suppress(KeyError, ValueError):
                         old_s_str = existing_item.get("Status", "").upper()
                         if old_s_str in Status.__members__:

@@ -59,7 +59,6 @@ def analyze_bulk_issues():
     # Process all messages and check if Targets have "bad" observations
     # A "bad" observation typically handles newlines or refers to other IDs.
 
-
     print("\n---------------- RESULTS ----------------")
 
     for msg in messages:
