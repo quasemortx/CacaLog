@@ -1,4 +1,5 @@
 from fastapi import BackgroundTasks, Depends, FastAPI, Request
+from fastapi.middleware.cors import CORSMiddleware
 
 from app.commands import handle_command
 from app.config import settings
@@ -8,11 +9,22 @@ from app.models import HistoryItem, InventoryItem, Status, TipoAmbiente
 from app.parser import REGEX_LAB, REGEX_SALA, extract_data_regex, normalize_status
 from app.redis_client import make_redis
 from app.security import require_webhook_token
-from app.sheets import SheetsClient
 from app.utils import classify_sector, get_current_timestamp, sanitize_for_sheets
 from app.whatsapp import send_message
 
 app = FastAPI(title="CaçaLog")
+app.state.sheets_client = None
+
+# CORS Middleware Setup
+origins = [o.strip() for o in settings.cors_origins.split(",") if o.strip()]
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=origins,
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 redis_conn = make_redis()
 deduper = Deduper(redis_conn)
 
@@ -31,10 +43,15 @@ async def startup_event():
     configure_logging()
     global sheets_client
     try:
+        from app.sheets import SheetsClient
+
         sheets_client = SheetsClient()
+        app.state.sheets_client = sheets_client
         logger.info("Connected to Google Sheets")
     except Exception as e:
-        logger.critical(f"Failed to connect to Google Sheets: {e}")
+        logger.critical(
+            f"Failed to connect to Google Sheets. App is running, but sheets integration will fail: {e}"
+        )
 
 
 @app.get("/webhook")
@@ -311,4 +328,10 @@ async def process_message(
 
 @app.get("/health")
 def health():
-    return {"status": "ok"}
+    return {"status": "ok", "sheets_connected": sheets_client is not None}
+
+
+# Registrar router da API no final para evitar circulares ou usar injeção seprada
+from app.api import router as api_router
+
+app.include_router(api_router)

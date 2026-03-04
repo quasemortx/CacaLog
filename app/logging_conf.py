@@ -6,7 +6,8 @@ from app.config import settings
 
 
 def configure_logging():
-    log_level = getattr(logging, settings.LOG_LEVEL.upper(), logging.INFO)
+    level_str = settings.log_level.upper() if settings.env == "development" else "INFO"
+    log_level = getattr(logging, level_str, logging.INFO)
 
     # Define handlers
     if sys.platform == "win32":

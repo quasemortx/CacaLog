@@ -8,6 +8,11 @@ class Settings(BaseSettings):
     webhook_token: str = "CHANGE_ME"
     admin_phone: str | None = None
 
+    # App Environment
+    env: str = "development"
+    log_level: str = "INFO"
+    cors_origins: str = "*"
+
     # Evolution API / WhatsApp / Outros (mantendo retrocompatibilidade do que o sistema já usava)
     base_url: str | None = None
     evolution_api_key: str | None = None

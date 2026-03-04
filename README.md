@@ -7,6 +7,7 @@ Sistema de monitoramento de inventário via WhatsApp, integrado com Evolution AP
 - Identifica Salas (Ex: S-712) e Laboratórios (Ex: L-03).
 - Extrai status via Regex (rápido e robusto).
 - Persiste dados em Google Sheets (Abas Inventario e Historico).
+  - Inclui sistema de _retry/backoff_ automático, tolerando falhas de rede com a API da Google de maneira transparente e segura para os logs.
 - Comandos Slash (/status, /resumo, /lab).
 
 ## Pré-requisitos
@@ -25,13 +26,21 @@ Sistema de monitoramento de inventário via WhatsApp, integrado com Evolution AP
 6. (Opcional) Defina a env var `REDIS_URL` para deduplicação resiliente de webhooks com 7 dias de persistência (TTL). Ex: `redis://localhost:6379/`.
    Se o banco de dados Redis estiver indisponível ou não for especificado, o bot fará o fallback limitando o histórico na memória (`Collections.deque`), porém perderá as tracks caso reinicie ou use instâncias múltiplas.
 
-## Execução
+## Execução (Dev / Prod)
 
+### Opção 1: Variáveis de Ambiente e Uvicorn (Recomendado)
+Crie seu arquivo `.env` com segurança (sem commitá-lo) definindo como os acessos funcionarão na porta desejada:
 ```bash
-# Windows
+# Terminal Mode
+ENV=production
+LOG_LEVEL=INFO
+WEBHOOK_TOKEN=seu_super_token
+uvicorn app.main:app --host 0.0.0.0 --port 8000
+```
+
+### Opção 2: Script Windows (Desenvolvimento)
+```bash
 ./scripts/run_dev.sh
-# ou
-python -m uvicorn app.main:app --reload
 ```
 
 ## Testes
