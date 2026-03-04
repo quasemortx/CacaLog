@@ -2,19 +2,20 @@ from fastapi import BackgroundTasks, Depends, FastAPI, Request
 
 from app.commands import handle_command
 from app.config import settings
+from app.dedup import Deduper
 from app.logging_conf import configure_logging, logger
 from app.models import HistoryItem, InventoryItem, Status, TipoAmbiente
 from app.parser import REGEX_LAB, REGEX_SALA, extract_data_regex, normalize_status
+from app.redis_client import make_redis
 from app.security import require_webhook_token
 from app.sheets import SheetsClient
 from app.utils import classify_sector, get_current_timestamp, sanitize_for_sheets
 from app.whatsapp import send_message
 
 app = FastAPI(title="CaçaLog")
+redis_conn = make_redis()
+deduper = Deduper(redis_conn)
 
-# Cache for deduplication (simple in-memory list)
-message_cache = []
-MAX_CACHE = 200
 
 # Sheets instance (global or dependency)
 sheets_client = None
@@ -128,13 +129,9 @@ async def webhook(
             # We silently ignore chat in this group
             return {"status": "ignored_cmd_group_chat"}
 
-    if msg_id in message_cache:
+    if await deduper.is_duplicate(msg_id):
+        logger.info(f"Duplicate message ignored: {msg_id}")
         return {"status": "duplicate"}
-
-    # Update cache
-    message_cache.append(msg_id)
-    if len(message_cache) > MAX_CACHE:
-        message_cache.pop(0)
 
     # Process in background
     background_tasks.add_task(process_message, conversation, msg_id, payload, remote_jid, is_admin)
