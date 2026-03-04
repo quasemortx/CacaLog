@@ -76,7 +76,9 @@ async def webhook(
     if not conversation:
         return {"status": "no text"}
 
-    logger.info(f"📩 Message Info | msg_id: {msg_id} | remoteJid: {remote_jid} | event_type: {event_type} | length: {len(conversation)}")
+    logger.info(
+        f"📩 Message Info | msg_id: {msg_id} | remoteJid: {remote_jid} | event_type: {event_type} | length: {len(conversation)}"
+    )
 
     # IDENTIFY SENDER (Who sent it)
     sender_jid = payload.get("sender") or key.get("participant") or remote_jid
@@ -131,7 +133,7 @@ async def webhook(
 
     if await deduper.is_duplicate(msg_id):
         logger.info(f"Duplicate message ignored: {msg_id}")
-        return {"status": "duplicate"}
+        return {"ok": True, "dedup": True}
 
     # Process in background
     background_tasks.add_task(process_message, conversation, msg_id, payload, remote_jid, is_admin)

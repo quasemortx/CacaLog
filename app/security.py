@@ -1,11 +1,11 @@
+import logging
+
 from fastapi import Header, HTTPException
 
 from app.config import settings
 
-
-import logging
-
 logger = logging.getLogger("cacalog")
+
 
 def require_webhook_token(x_cacalog_token: str | None = Header(default=None)) -> None:
     """Verifica se o token do Webhook bate com a configuração."""

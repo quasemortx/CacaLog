@@ -22,6 +22,8 @@ Sistema de monitoramento de inventário via WhatsApp, integrado com Evolution AP
 4. Copie `.env.example` para `.env` e preencha.
 5. Defina um `WEBHOOK_TOKEN` nas suas variáveis de ambiente ou no `.env`.
    O endpoint `POST /webhook` exige esse token no header `X-CACALOG-TOKEN`. Sem isso, retornará `401 Unauthorized`.
+6. (Opcional) Defina a env var `REDIS_URL` para deduplicação resiliente de webhooks com 7 dias de persistência (TTL). Ex: `redis://localhost:6379/`.
+   Se o banco de dados Redis estiver indisponível ou não for especificado, o bot fará o fallback limitando o histórico na memória (`Collections.deque`), porém perderá as tracks caso reinicie ou use instâncias múltiplas.
 
 ## Execução
 
