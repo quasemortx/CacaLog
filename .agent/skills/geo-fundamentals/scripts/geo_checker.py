@@ -100,15 +100,8 @@ def is_page_file(file_path: Path) -> bool:
     if "pages" in parts or "app" in parts or "routes" in parts:
         return True
 
-    # Check filename indicators
-    if any(ind in name for ind in page_indicators):
-        return True
-
-    # HTML files are usually pages
-    if file_path.suffix.lower() == ".html":
-        return True
-
-    return False
+    # Check filename indicators or if it's an HTML file
+    return any(ind in name for ind in page_indicators) or file_path.suffix.lower() == ".html"
 
 
 def find_web_pages(project_path: Path) -> list:

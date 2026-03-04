@@ -89,6 +89,7 @@ Analyzes code for compliance with:
 Total: 80+ checks across all design principles
 """
 
+import contextlib
 import json
 import os
 import re
@@ -107,7 +108,7 @@ class UXAuditor:
         try:
             with open(filepath, encoding="utf-8", errors="replace") as f:
                 content = f.read()
-        except:
+        except OSError:
             return
 
         self.files_checked += 1
@@ -420,10 +421,8 @@ class UXAuditor:
                     "black": "900",
                 }
                 val = weight_map.get(val.lower(), val)
-                try:
+                with contextlib.suppress(BaseException):
                     weight_values.append(int(val))
-                except:
-                    pass
 
         # Check for adjacent weights (400/500, 500/600, etc.)
         for i in range(len(weight_values) - 1):

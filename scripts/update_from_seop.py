@@ -46,7 +46,7 @@ async def update_database():
         def safe_int(val, default=0):
             try:
                 return int(val)
-            except:
+            except Exception:
                 return default
 
         item = InventoryItem(

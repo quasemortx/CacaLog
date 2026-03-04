@@ -219,7 +219,7 @@ Examples:
     # Run performance checks if URL provided
     if args.url and not args.skip_performance:
         print_header("⚡ PERFORMANCE CHECKS")
-        for name, script_path, required in PERFORMANCE_CHECKS:
+        for name, script_path, _required in PERFORMANCE_CHECKS:
             script = project_path / script_path
             result = run_script(name, script, str(project_path), args.url)
             results.append(result)

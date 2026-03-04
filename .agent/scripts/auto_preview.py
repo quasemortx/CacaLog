@@ -58,7 +58,7 @@ def start_server(port=3000):
             if is_running(pid):
                 print(f"⚠️  Preview already running (PID: {pid})")
                 return
-        except:
+        except Exception:
             pass  # Invalid PID file
 
     root = get_project_root()
@@ -92,7 +92,7 @@ def start_server(port=3000):
 
 def stop_server():
     if not PID_FILE.exists():
-        print("ℹ️  No preview server found.")
+        print("ℹ  No preview server found.")
         return
 
     try:
@@ -106,7 +106,7 @@ def stop_server():
             )
             print(f"🛑 Preview stopped (PID: {pid})")
         else:
-            print("ℹ️  Process was not running.")
+            print("ℹ  Process was not running.")
     except Exception as e:
         print(f"❌ Error stopping server: {e}")
     finally:
@@ -126,7 +126,7 @@ def status_server():
                 running = True
                 # Heuristic for URL, strictly we should save it
                 url = "http://localhost:3000"
-        except:
+        except Exception:
             pass
 
     print("\n=== Preview Status ===")

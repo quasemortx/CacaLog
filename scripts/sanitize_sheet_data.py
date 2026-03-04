@@ -53,9 +53,9 @@ def main():
                 current_status = row[status_index]
                 obs_lower = row[obs_index].lower()
 
-                if current_status == "NAO_AVALIADO":
-                    # Check keywords manually or use parser logic
-                    if any(x in obs_lower for x in ["atualizando", "verificando", "🔄", "aguarde"]):
+                if current_status == "NAO_AVALIADO" and any(
+                    x in obs_lower for x in ["atualizando", "verificando", "🔄", "aguarde"]
+                ):
                         print(f"Row {i}: Migrating Status -> ATUALIZANDO")
                         row[status_index] = "ATUALIZANDO"
                         updates_made += 1

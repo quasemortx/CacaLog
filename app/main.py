@@ -253,17 +253,16 @@ async def process_message(
 
             if existing_item:
                 if current_status == Status.NAO_AVALIADO:
-                    try:
+                    import contextlib
+                    with contextlib.suppress(KeyError, ValueError):
                         old_s_str = existing_item.get("Status", "").upper()
                         if old_s_str in Status.__members__:
                             current_status = Status[old_s_str]
-                    except:
-                        pass
                 if not item.get("modelo") and existing_item.get("Modelo"):
                     inv_item.modelo = existing_item.get("Modelo")
 
             if current_status == Status.NAO_AVALIADO and existing_item:
-                msg_reply = f"ℹ️ *{local_id} está {existing_item.get('Status')}* ({existing_item.get('Modelo') or 'Modelo não def.'}).\nObs: {existing_item.get('Observacao') or '-'}"
+                msg_reply = f"[Info] *{local_id} está {existing_item.get('Status')}* ({existing_item.get('Modelo') or 'Modelo não def.'}).\nObs: {existing_item.get('Observacao') or '-'}"
                 await send_message(reply_to_jid, msg_reply)
                 return
 

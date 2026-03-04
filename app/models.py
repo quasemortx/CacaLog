@@ -1,9 +1,9 @@
-from enum import Enum
+from enum import StrEnum
 
 from pydantic import BaseModel
 
 
-class Status(str, Enum):
+class Status(StrEnum):
     OK = "OK"
     PENDENTE = "PENDENTE"
     ERRO = "ERRO"
@@ -12,7 +12,7 @@ class Status(str, Enum):
     ATUALIZANDO = "ATUALIZANDO"
 
 
-class TipoAmbiente(str, Enum):
+class TipoAmbiente(StrEnum):
     SALA = "SALA"
     LAB = "LAB"
 

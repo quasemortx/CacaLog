@@ -6,6 +6,8 @@ import sys
 # Add parent directory to path
 sys.path.append(os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
 
+import contextlib
+
 from app.models import InventoryItem, Status, TipoAmbiente
 from app.sheets import SheetsClient
 from app.utils import get_current_timestamp
@@ -109,10 +111,8 @@ def process_390s():
             if target_item.get("Andar"):
                 new_item.andar = target_item.get("Andar")
             if target_item.get("TipoAmbiente"):
-                try:
+                with contextlib.suppress(BaseException):
                     new_item.tipo_ambiente = TipoAmbiente(target_item.get("TipoAmbiente"))
-                except:
-                    pass
 
             logger.info(f"Updating Room {room}: Status {current_status} -> INCOMPATIVEL")
             sheets.upsert_inventory(new_item)

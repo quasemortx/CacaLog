@@ -47,7 +47,7 @@ def analyze_bulk_issues():
         if match:
             if current_msg:
                 messages.append(current_msg)
-            timestamp, sender, body = match.groups()
+            _timestamp, _sender, body = match.groups()
             current_msg = {"body": body}
         else:
             if current_msg:
@@ -59,7 +59,6 @@ def analyze_bulk_issues():
     # Process all messages and check if Targets have "bad" observations
     # A "bad" observation typically handles newlines or refers to other IDs.
 
-    found_count = 0
 
     print("\n---------------- RESULTS ----------------")
 

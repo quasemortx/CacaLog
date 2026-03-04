@@ -87,12 +87,11 @@ async def rebuild_database():
     print(f"📊 Found {len(messages)} messages to process.")
 
     # 4. Parse and Upsert
-    processed_count = 0
 
     # We want to process chronologically (Start to End).
     # The log seems chronological.
 
-    for i, msg in enumerate(messages):
+    for _i, msg in enumerate(messages):
         body = msg["body"]
         sender = msg["sender"]
         timestamp = msg["timestamp"]
@@ -101,7 +100,7 @@ async def rebuild_database():
         items = extract_data_regex(body)
 
         if items:
-            for item in items:
+            for _item in items:
                 # Merge Logic (Simplified for Rebuild: Just overwrite since we go chronological)
                 # But we have Partial Update logic in main.py.
                 # Should we reuse that?
@@ -189,25 +188,6 @@ async def rebuild_database():
     print(f"☁️ Uploading {len(inventory_state)} items to Google Sheets...")
 
     # Define Headers
-    headers = [
-        "local_id",
-        "Sala",
-        "Predio",
-        "Andar",
-        "TipoAmbiente",
-        "Modelo",
-        "BIOS",
-        "TotalPCs",
-        "Concluidos",
-        "Pendentes",
-        "Erros",
-        "Status",
-        "Observacao",
-        "Setor",
-        "UltimoResponsavel",
-        "UltimoContato",
-        "UltimaAtualizacao",
-    ]
 
     # Prepare Data Rows
     rows = []

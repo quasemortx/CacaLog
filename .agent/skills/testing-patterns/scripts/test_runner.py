@@ -11,6 +11,7 @@ Supports:
     - Python: pytest, unittest
 """
 
+import contextlib
 import json
 import subprocess
 import sys
@@ -18,10 +19,8 @@ from datetime import datetime
 from pathlib import Path
 
 # Fix Windows console encoding
-try:
+with contextlib.suppress(BaseException):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-except:
-    pass
 
 
 def detect_test_framework(project_path: Path) -> dict:
@@ -58,7 +57,7 @@ def detect_test_framework(project_path: Path) -> dict:
                 result["cmd"] = ["npx", "jest"]
                 result["coverage_cmd"] = ["npx", "jest", "--coverage"]
 
-        except:
+        except Exception:
             pass
 
     # Python project

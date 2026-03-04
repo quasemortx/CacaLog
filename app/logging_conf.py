@@ -9,11 +9,12 @@ def configure_logging():
 
     # Define handlers
     if sys.platform == "win32":
-        # Windows needs explicit utf-8 for console to avoid charmap errors with emojis
+        # Force UTF-8 on Windows console
+        try:
+            sys.stdout.reconfigure(encoding="utf-8")
+        except AttributeError:
+            pass
         console_handler = logging.StreamHandler(sys.stdout)
-        console_handler.setStream(
-            open(sys.stdout.fileno(), mode="w", encoding="utf-8", buffering=1)
-        )
     else:
         console_handler = logging.StreamHandler(sys.stderr)
 

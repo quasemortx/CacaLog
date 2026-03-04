@@ -12,6 +12,7 @@ Usage:
     result = generate_design_system("SaaS dashboard", "My Project", persist=True, page="dashboard")
 """
 
+import contextlib
 import csv
 import json
 from datetime import datetime
@@ -46,7 +47,7 @@ class DesignSystemGenerator:
         with open(filepath, encoding="utf-8") as f:
             return list(csv.DictReader(f))
 
-    def _multi_domain_search(self, query: str, style_priority: list = None) -> dict:
+    def _multi_domain_search(self, query: str, style_priority: list | None = None) -> dict:
         """Execute searches across multiple domains."""
         results = {}
         for domain, config in SEARCH_CONFIG.items():
@@ -101,10 +102,8 @@ class DesignSystemGenerator:
 
         # Parse decision rules JSON
         decision_rules = {}
-        try:
+        with contextlib.suppress(json.JSONDecodeError):
             decision_rules = json.loads(rule.get("Decision_Rules", "{}"))
-        except json.JSONDecodeError:
-            pass
 
         return {
             "pattern": rule.get("Recommended_Pattern", ""),
@@ -158,7 +157,7 @@ class DesignSystemGenerator:
         """Extract results list from search result dict."""
         return search_result.get("results", [])
 
-    def generate(self, query: str, project_name: str = None) -> dict:
+    def generate(self, query: str, project_name: str | None = None) -> dict:
         """Generate complete design system recommendation."""
         # Step 1: First search product to get category
         product_result = search(query, "product", 1)
@@ -475,11 +474,11 @@ def format_markdown(design_system: dict) -> str:
 # ============ MAIN ENTRY POINT ============
 def generate_design_system(
     query: str,
-    project_name: str = None,
+    project_name: str | None = None,
     output_format: str = "ascii",
     persist: bool = False,
-    page: str = None,
-    output_dir: str = None,
+    page: str | None = None,
+    output_dir: str | None = None,
 ) -> str:
     """
     Main entry point for design system generation.
@@ -509,7 +508,7 @@ def generate_design_system(
 
 # ============ PERSISTENCE FUNCTIONS ============
 def persist_design_system(
-    design_system: dict, page: str = None, output_dir: str = None, page_query: str = None
+    design_system: dict, page: str | None = None, output_dir: str | None = None, page_query: str | None = None
 ) -> dict:
     """
     Persist design system to design-system/<project>/ folder using Master + Overrides pattern.
@@ -830,7 +829,7 @@ def format_master_md(design_system: dict) -> str:
     return "\n".join(lines)
 
 
-def format_page_override_md(design_system: dict, page_name: str, page_query: str = None) -> str:
+def format_page_override_md(design_system: dict, page_name: str, page_query: str | None = None) -> str:
     """Format a page-specific override file with intelligent AI-generated content."""
     project = design_system.get("project_name", "PROJECT")
     timestamp = datetime.now().strftime("%Y-%m-%d %H:%M:%S")
@@ -981,9 +980,9 @@ def _generate_intelligent_overrides(page_name: str, page_query: str, design_syst
     # Extract style-based overrides
     if style_results:
         style = style_results[0]
-        style_name = style.get("Style Category", "")
+        style.get("Style Category", "")
         keywords = style.get("Keywords", "")
-        best_for = style.get("Best For", "")
+        style.get("Best For", "")
         effects = style.get("Effects & Animation", "")
 
         # Infer layout from style keywords
@@ -1076,7 +1075,7 @@ def _detect_page_type(context: str, style_results: list) -> str:
 
     # Fallback: try to infer from style results
     if style_results:
-        style_name = style_results[0].get("Style Category", "").lower()
+        style_results[0].get("Style Category", "").lower()
         best_for = style_results[0].get("Best For", "").lower()
 
         if "dashboard" in best_for or "data" in best_for:

@@ -68,16 +68,6 @@ class SheetsClient:
             "UltimoContato",
             "UltimaAtualizacao",
         ]
-        hist_headers = [
-            "timestamp",
-            "local_id",
-            "status",
-            "observacao",
-            "responsavel",
-            "contato",
-            "mensagem_original",
-            "message_id",
-        ]
 
         current_inv = retry_sync(lambda: self.inventory_ws.row_values(1))
         if not current_inv:
@@ -192,7 +182,7 @@ class SheetsClient:
                 if len(row_values) < len(headers):
                     row_values += [""] * (len(headers) - len(row_values))
 
-                return dict(zip(headers, row_values))
+                return dict(zip(headers, row_values, strict=False))
             return None
         except Exception as e:
             logger.error(f"Error fetching item {local_id}: {e}")

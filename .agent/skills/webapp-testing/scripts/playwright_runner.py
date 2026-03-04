@@ -183,9 +183,6 @@ if __name__ == "__main__":
     take_screenshot = "--screenshot" in sys.argv
     check_a11y = "--a11y" in sys.argv
 
-    if check_a11y:
-        result = run_accessibility_check(url)
-    else:
-        result = run_basic_test(url, take_screenshot)
+    result = run_accessibility_check(url) if check_a11y else run_basic_test(url, take_screenshot)
 
     print(json.dumps(result, indent=2))

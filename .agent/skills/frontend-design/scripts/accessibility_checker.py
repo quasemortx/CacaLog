@@ -14,6 +14,7 @@ Checks:
     - Semantic HTML
 """
 
+import contextlib
 import json
 import re
 import sys
@@ -21,10 +22,8 @@ from datetime import datetime
 from pathlib import Path
 
 # Fix Windows console encoding
-try:
+with contextlib.suppress(BaseException):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-except:
-    pass
 
 
 def find_html_files(project_path: Path) -> list:
@@ -89,9 +88,8 @@ def check_accessibility(file_path: Path) -> list:
                     issues.append("Avoid positive tabIndex values")
 
         # Check for autoplay media
-        if "autoplay" in content.lower():
-            if "muted" not in content.lower():
-                issues.append("Autoplay media should be muted")
+        if "autoplay" in content.lower() and "muted" not in content.lower():
+            issues.append("Autoplay media should be muted")
 
         # Check for role usage
         if 'role="button"' in content.lower():

@@ -99,18 +99,17 @@ class PerformanceChecker:
                         if (
                             f"import {filename}" in check_content
                             or f"import {{ {filename}" in check_content
-                        ):
-                            if "dynamic(" not in check_content:
-                                self.warnings.append(
-                                    {
-                                        "file": str(check_file.relative_to(self.project_path)),
-                                        "type": "CRITICAL",
-                                        "issue": f"Large component {filename} imported statically",
-                                        "fix": "Use dynamic() for code splitting",
-                                        "section": "2-bundle-bundle-size-optimization.md",
-                                    }
-                                )
-                                break
+                        ) and "dynamic(" not in check_content:
+                            self.warnings.append(
+                                {
+                                    "file": str(check_file.relative_to(self.project_path)),
+                                    "type": "CRITICAL",
+                                    "issue": f"Large component {filename} imported statically",
+                                    "fix": "Use dynamic() for code splitting",
+                                    "section": "2-bundle-bundle-size-optimization.md",
+                                }
+                            )
+                            break
             except Exception:
                 continue
 

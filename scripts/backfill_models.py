@@ -66,7 +66,6 @@ def main():
         logger.warning("No records found.")
         return
 
-    updates = []
 
     # We need to write back to specific cells.
     # gspread's update_cells or parsing the whole data range is better.

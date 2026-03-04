@@ -11,6 +11,7 @@ Supports:
     - Python: ruff check, mypy
 """
 
+import contextlib
 import json
 import platform
 import subprocess
@@ -19,10 +20,8 @@ from datetime import datetime
 from pathlib import Path
 
 # Fix Windows console encoding
-try:
+with contextlib.suppress(BaseException):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-except:
-    pass
 
 
 def detect_project_type(project_path: Path) -> dict:
@@ -48,7 +47,7 @@ def detect_project_type(project_path: Path) -> dict:
             if "typescript" in deps or (project_path / "tsconfig.json").exists():
                 result["linters"].append({"name": "tsc", "cmd": ["npx", "tsc", "--noEmit"]})
 
-        except:
+        except Exception:
             pass
 
     # Python project
@@ -73,11 +72,10 @@ def run_linter(linter: dict, cwd: Path) -> dict:
         cmd = linter["cmd"]
 
         # Windows compatibility for npm/npx
-        if platform.system() == "Windows":
-            if cmd[0] in ["npm", "npx"]:
-                # Force .cmd extension on Windows
-                if not cmd[0].lower().endswith(".cmd"):
-                    cmd[0] = f"{cmd[0]}.cmd"
+        if platform.system() == "Windows" and cmd[0] in ["npm", "npx"]:
+            # Force .cmd extension on Windows
+            if not cmd[0].lower().endswith(".cmd"):
+                cmd[0] = f"{cmd[0]}.cmd"
 
         proc = subprocess.run(
             cmd,

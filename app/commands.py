@@ -1,3 +1,5 @@
+import contextlib
+
 from app.sheets import SheetsClient
 
 
@@ -211,16 +213,14 @@ Ex: /deletar S-712 ou /deletar L-03
             return f"Nenhum registro com status {target_status}."
 
         resp = f"Lista de {target_status}:\n"
-        count = 0
-        for r in found:
-            if count > 40:  # Limite para não floodar
+        for i, r in enumerate(found):
+            if i > 40:  # Limite para não floodar
                 resp += "...e mais."
                 break
             # User request: "ver os status das maquinas"
             # Format: S-712: PENDENTE (Obs: ...)
             model_info = f" [{r.get('Modelo')}]" if r.get("Modelo") else ""
             resp += f"🔸 {r['local_id']}{model_info}: {r['Status']} ({r['Observacao']})\n"
-            count += 1
         return resp
 
     # New Commands: /ti and /manutencao
@@ -267,11 +267,9 @@ Ex: /deletar S-712 ou /deletar L-03
             # Fallback for Labs
             lid = str(r.get("local_id", ""))
             if "L-" in lid:
-                try:
+                with contextlib.suppress(ValueError):
                     val = int(lid.replace("L-", ""))
                     return 2 if val >= 20 else 1
-                except:
-                    pass
             return 0
 
         # Helper to count sectors
@@ -445,16 +443,12 @@ Ex: /deletar S-712 ou /deletar L-03
         # Detectar qual arg é prédio
         if "p1" in args[0].lower() or "p2" in args[0].lower():
             p_str = args[0].lower()
-            try:
+            with contextlib.suppress(BaseException):
                 andar_val = int(args[1])
-            except:
-                pass
         elif "p1" in args[1].lower() or "p2" in args[1].lower():
             p_str = args[1].lower()
-            try:
+            with contextlib.suppress(BaseException):
                 andar_val = int(args[0])
-            except:
-                pass
 
         predio = 1 if "p1" in p_str else 2 if "p2" in p_str else None
 

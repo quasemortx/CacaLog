@@ -13,6 +13,7 @@ Checks:
     - Naming conventions
 """
 
+import contextlib
 import json
 import re
 import sys
@@ -20,10 +21,8 @@ from datetime import datetime
 from pathlib import Path
 
 # Fix Windows console encoding
-try:
+with contextlib.suppress(BaseException):
     sys.stdout.reconfigure(encoding="utf-8", errors="replace")
-except:
-    pass
 
 
 def find_schema_files(project_path: Path) -> list:
@@ -125,10 +124,7 @@ def main():
     for schema_type, file_path in schemas:
         print(f"\nValidating: {file_path.name} ({schema_type})")
 
-        if schema_type == "prisma":
-            issues = validate_prisma_schema(file_path)
-        else:
-            issues = []  # Drizzle validation could be added
+        issues = validate_prisma_schema(file_path) if schema_type == "prisma" else []
 
         if issues:
             all_issues.append({"file": str(file_path.name), "type": schema_type, "issues": issues})

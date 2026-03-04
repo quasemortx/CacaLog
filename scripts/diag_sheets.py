@@ -26,8 +26,8 @@ def diagnostic():
     # Check for P1 Labs specifically
     labs = [r for r in records if r.get("TipoAmbiente") == "LAB"]
     print(f"\nTotal Labs in all spreadsheet: {len(labs)}")
-    for l in labs:
-        print(f"  - {l.get('local_id')}: Predio={l.get('Predio')}")
+    for lab in labs:
+        print(f"  - {lab.get('local_id')}: Predio={lab.get('Predio')}")
 
 
 if __name__ == "__main__":

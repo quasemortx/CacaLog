@@ -16,7 +16,7 @@ REGEX_LAB = re.compile(r"\b(?:Lab(?:oratori[oa])?\.?\s*|L-)(\d{1,2})\b", re.IGNO
 def validate_sala(numero_str: str) -> dict | None:
     # Regras de validacao de numero
     try:
-        num = int(numero_str)
+        int(numero_str)
         # "012" -> int 12. Regra diz 3 digitos. Entao 012 deve ser tratado como string '012' se capturado assim.
 
         # Ajuste: passar a string original capturada pelo regex é melhor
@@ -82,11 +82,7 @@ def check_model_reference(text: str) -> bool:
 
     # 3. Ambiguous (3010/3020)
     # If present, triggering "Qual sala?" is correct behavior if regex extraction skipped it.
-    for n in AMBIGUOUS_NUMBERS:
-        if n in t:
-            return True
-
-    return False
+    return any(n in t for n in AMBIGUOUS_NUMBERS)
 
 
 def get_status_from_text(text: str) -> Status | None:
@@ -353,7 +349,7 @@ def extract_data_regex(message: str) -> list[dict[str, Any]]:
     matches_lab = REGEX_LAB.findall(message)
 
     # Clean message for processing (remove extra spaces, normalize newlines)
-    clean_text = re.sub(r"\s+", " ", message.strip()).lower()
+    re.sub(r"\s+", " ", message.strip()).lower()
 
     for m in matches_lab:
         val = int(m)
@@ -428,10 +424,7 @@ def extract_data_regex(message: str) -> list[dict[str, Any]]:
                     # If not in capture mode, we skip line.
                     # This avoids "Lab 2 has 1 w11" being picked up by "Lab 1" just because it has "1".
 
-                if relevant_lines:
-                    text_segment = " | ".join(relevant_lines)
-                else:  # Fallback if fancy logic fails
-                    text_segment = lower_msg
+                text_segment = " | ".join(relevant_lines) if relevant_lines else lower_msg
 
             # Initialize item for this lab
             item = {
@@ -463,7 +456,7 @@ def extract_data_regex(message: str) -> list[dict[str, Any]]:
             # Adjusted for formats like "1 - win 11", "12 - win 10"
             # (\d+) followed by optional separators/spaces then keyword
             ok_match = re.search(
-                r"(\d+)\s*(?:[-–|]\s*)?(?:pcs?)?\s*(?:est[ãa]o)?\s*(?:ok|w11|win\s*11|concluid[oa]s?|feita?s?)",
+                r"(\d+)\s*(?:[\-|]\s*)?(?:pcs?)?\s*(?:est[ãa]o)?\s*(?:ok|w11|win\s*11|concluid[oa]s?|feita?s?)",
                 text_segment,
                 re.IGNORECASE,
             )
@@ -471,7 +464,7 @@ def extract_data_regex(message: str) -> list[dict[str, Any]]:
                 item["concluidos"] = int(ok_match.group(1))
 
             pend_match = re.search(
-                r"(\d+)\s*(?:[-–|]\s*)?(?:pcs?)?\s*(?:est[ãa]o)?\s*(?:pendentes?|faltan?do|sem|a fazer|win\s*10)",
+                r"(\d+)\s*(?:[\-|]\s*)?(?:pcs?)?\s*(?:est[ãa]o)?\s*(?:pendentes?|faltan?do|sem|a fazer|win\s*10)",
                 text_segment,
                 re.IGNORECASE,
             )
@@ -487,7 +480,7 @@ def extract_data_regex(message: str) -> list[dict[str, Any]]:
                         item["pendentes"] = remainder
 
             erro_match = re.search(
-                r"(\d+)\s*(?:[-–|]\s*)?(?:pcs?)?\s*(?:est[ãa]o)?\s*(?:erro|defeito|falha|tela azul|sem espaco|sem espaço)",
+                r"(\d+)\s*(?:[\-|]\s*)?(?:pcs?)?\s*(?:est[ãa]o)?\s*(?:erro|defeito|falha|tela azul|sem espaco|sem espaço)",
                 text_segment,
                 re.IGNORECASE,
             )

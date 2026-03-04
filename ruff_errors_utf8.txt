@@ -1,0 +1,11 @@
+﻿RUF001 String contains ambiguous `ℹ` (INFORMATION SOURCE). Did you mean `i` (LATIN SMALL LETTER I)?
+   --> app\main.py:265:31
+    |
+264 | …     if current_status == Status.NAO_AVALIADO and existing_item:
+265 | …         msg_reply = f"ℹ *{local_id} está {existing_item.get('Status')}* ({existing_item.get('Modelo') or 'Modelo não def.'}).\nObs:…
+    |                         ^
+266 | …         await send_message(reply_to_jid, msg_reply)
+267 | …         return
+    |
+
+Found 1 error.

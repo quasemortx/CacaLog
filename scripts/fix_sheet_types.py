@@ -28,7 +28,7 @@ def main():
     try:
         idx_predio = headers.index("Predio")
         idx_andar = headers.index("Andar")
-        idx_sala = headers.index("Sala")
+        headers.index("Sala")
     except ValueError:
         logger.error("Could not find headers Predio/Andar/Sala.")
         return

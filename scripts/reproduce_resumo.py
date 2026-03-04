@@ -4,6 +4,8 @@ import sys
 # Setup path
 sys.path.append(os.getcwd())
 
+from app.commands import handle_command
+
 
 # Mock Sheets Client
 class MockSheets:
@@ -61,10 +63,9 @@ class MockSheets:
         pass
 
 
-from app.commands import handle_command
-
-
 def test_resumo():
+    # Check what the resumos give
+    print("\n--- RESUMO P1 ---")
     print("Testing /resumo p1 with Mock Data...")
     sheets = MockSheets()
 

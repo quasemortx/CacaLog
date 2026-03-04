@@ -32,7 +32,7 @@ def analyze_727():
         if match:
             if current_msg:
                 messages.append(current_msg)
-            timestamp, sender, body = match.groups()
+            _timestamp, _sender, body = match.groups()
             current_msg = {"body": body}
         else:
             if current_msg:

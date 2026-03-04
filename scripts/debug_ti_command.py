@@ -31,7 +31,7 @@ def main():
         status = r.get("Status", "UNKNOWN")
         setor = r.get("Setor", "N/A")
         local = r.get("local_id", "?")
-        obs = r.get("Observacao", "")
+        r.get("Observacao", "")
 
         # Check condition
         is_candidates = status != "OK" and setor == target_sector
