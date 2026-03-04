@@ -234,13 +234,11 @@ Ex: /deletar S-712 ou /deletar L-03
             return f"Nenhum chamado pendente para {target_sector}."
 
         resp = f"🛠️ Chamados {target_sector}:\n"
-        count = 0
-        for r in found:
+        for count, r in enumerate(found):
             if count > 30:
                 resp += "...e mais."
                 break
             resp += f"🔸 {r['local_id']}: {r['Status']} ({r['Observacao']})\n"
-            count += 1
         return resp
 
     if cmd == "/resumo":

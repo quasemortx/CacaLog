@@ -1,5 +1,6 @@
 import logging
 import sys
+from contextlib import suppress
 
 from app.config import settings
 
@@ -10,10 +11,8 @@ def configure_logging():
     # Define handlers
     if sys.platform == "win32":
         # Force UTF-8 on Windows console
-        try:
+        with suppress(AttributeError):
             sys.stdout.reconfigure(encoding="utf-8")
-        except AttributeError:
-            pass
         console_handler = logging.StreamHandler(sys.stdout)
     else:
         console_handler = logging.StreamHandler(sys.stderr)
