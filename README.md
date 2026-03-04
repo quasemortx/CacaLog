@@ -9,6 +9,7 @@ Sistema de monitoramento de inventário via WhatsApp, integrado com Evolution AP
 - Persiste dados em Google Sheets (Abas Inventario e Historico).
   - Inclui sistema de _retry/backoff_ automático, tolerando falhas de rede com a API da Google de maneira transparente e segura para os logs.
 - Comandos Slash (/status, /resumo, /lab).
+- API REST para Painéis de visualização (Read-Only) assegurada pelo header `X-API-KEY`.
 
 ## Pré-requisitos
 - Python 3.11+
@@ -35,6 +36,8 @@ Crie seu arquivo `.env` com segurança (sem commitá-lo) definindo como os acess
 ENV=production
 LOG_LEVEL=INFO
 WEBHOOK_TOKEN=seu_super_token
+API_KEY=sua_senha_para_os_dashboards_da_api
+CORS_ORIGINS="*"
 uvicorn app.main:app --host 0.0.0.0 --port 8000
 ```
 

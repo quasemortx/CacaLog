@@ -1,6 +1,8 @@
-from fastapi import APIRouter, HTTPException, Request
+from fastapi import APIRouter, Depends, HTTPException, Request
 
-router = APIRouter(prefix="/api")
+from app.security import require_api_key
+
+router = APIRouter(prefix="/api", dependencies=[Depends(require_api_key)])
 
 
 def get_sheets_client(request: Request):
