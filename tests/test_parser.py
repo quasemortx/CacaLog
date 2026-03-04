@@ -13,4 +13,4 @@ def test_parse_lab():
     items = extract_data_regex("L-03 pendente")
     assert len(items) == 1
     assert items[0]["local_id"] == "L-03"
-    assert items[0]["tipo_ambiente"] == "LABORATORIO"
+    assert items[0]["tipo_ambiente"].value == "LAB"

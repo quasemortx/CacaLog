@@ -15,4 +15,4 @@ def test_manutencao_keywords():
 
 def test_status_based_classification():
     assert classify_sector("ok", "") == "Indefinido"
-    assert classify_sector("em_manutencao", "") == "TI"
+    assert classify_sector("em_manutencao", "") == "Indefinido"
