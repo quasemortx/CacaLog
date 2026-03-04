@@ -332,6 +332,10 @@ def health():
 
 
 # Registrar router da API no final para evitar circulares ou usar injeção seprada
-from app.api import router as api_router
+def register_routes() -> None:
+    from app.api import router as api_router  # import local para evitar circular
 
-app.include_router(api_router)
+    app.include_router(api_router)
+
+
+register_routes()
