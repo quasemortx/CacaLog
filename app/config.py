@@ -12,6 +12,7 @@ class Settings(BaseSettings):
     base_url: str | None = None
     evolution_api_key: str | None = None
     whatsapp_instance: str | None = None
+    redis_url: str | None = None
 
     # Sheets
     google_credentials_path: str = "credentials.json"
