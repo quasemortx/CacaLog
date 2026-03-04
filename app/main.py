@@ -46,18 +46,16 @@ async def webhook_test():
 async def webhook(
     request: Request, background_tasks: BackgroundTasks, _: None = Depends(require_webhook_token)
 ):
-    print("DEBUG: Webhook endpoint hit!")  # Force stdout
-    logger.info("⚡ Webhook Request Received!")
+    logger.info("⚡ Webhook Request Received")
     try:
         data = await request.json()
     except Exception as e:
         logger.error(f"Failed to parse JSON: {e}")
         return {"status": "error"}
 
-    logger.info(f"📥 Webhook Payload: {data}")  # Optional debug
-
-    # Evolution API structure handling
-    event_type = data.get("event") or data.get("type")
+    # Structured basic info without dumping full raw payload
+    event_type = data.get("event") or data.get("type", "unknown")
+    logger.info(f"📥 Event Type: {event_type}")
 
     if event_type not in ["messages.upsert", "message"]:
         return {"status": "ignored_event", "event": event_type}
@@ -113,7 +111,7 @@ async def webhook(
     is_admin = settings.WHATSAPP_ADMIN_ID in [remote_jid, sender_jid]
 
     logger.info(
-        f"Auth Check: JID={remote_jid} | Sender={sender_jid} | Admin={is_admin} | FromMe={from_me}"
+        f"Auth Check: source_msg={msg_id} | JID={remote_jid} | Sender={sender_jid} | Admin={is_admin} | FromMe={from_me}"
     )
 
     if not (is_main_group or is_cmd_group or is_admin):
@@ -136,7 +134,7 @@ async def webhook(
     # Process in background
     background_tasks.add_task(process_message, conversation, msg_id, payload, remote_jid, is_admin)
 
-    logger.info(f"✅ Webhook Accepted -> Background Task: {msg_id}")
+    logger.info(f"✅ Webhook processed in background -> Task: {msg_id}")
     return {"status": "processing"}
 
 
@@ -148,7 +146,7 @@ async def process_message(
     sender_num = sender_info.get("participant") or sender_info.get("key", {}).get("remoteJid")
 
     clean_text = text.strip()
-    logger.info(f"Processing Text: '{clean_text}'")
+    logger.info(f"Processing Text (Msg: {msg_id} / Sender: {push_name})")
 
     # 1. Check for Commands
     if clean_text.startswith("/") or clean_text.startswith("!"):
@@ -184,9 +182,9 @@ async def process_message(
 
     # 2. Parse Inventory Data
     # Use Regex Only
-    logger.info(f"Processing message with Regex: {clean_text}")
+    logger.info(f"Processing message with Regex (Msg: {msg_id})")
     extracted_items = extract_data_regex(clean_text)
-    logger.info(f"Extracted items: {len(extracted_items)} | data={extracted_items}")
+    logger.info(f"Extracted items: {len(extracted_items)}")
 
     # 3. Handle Ambiguity (e.g. "390" without room)
     from app.parser import check_model_reference

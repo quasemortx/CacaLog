@@ -4,6 +4,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 from app.config import settings
 from app.logging_conf import logger
 from app.models import HistoryItem, InventoryItem
+from app.retry import retry_sync
 
 SCOPES = [
     "https://spreadsheets.google.com/feeds",
@@ -22,17 +23,25 @@ class SheetsClient:
         self.sheet = self.client.open_by_key(settings.GOOGLE_SHEETS_ID)
 
         try:
-            self.inventory_ws = self.sheet.worksheet(settings.GOOGLE_WORKSHEET_INVENTARIO)
+            self.inventory_ws = retry_sync(
+                lambda: self.sheet.worksheet(settings.GOOGLE_WORKSHEET_INVENTARIO)
+            )
         except gspread.exceptions.WorksheetNotFound:
-            self.inventory_ws = self.sheet.add_worksheet(
-                title=settings.GOOGLE_WORKSHEET_INVENTARIO, rows=1000, cols=20
+            self.inventory_ws = retry_sync(
+                lambda: self.sheet.add_worksheet(
+                    title=settings.GOOGLE_WORKSHEET_INVENTARIO, rows=1000, cols=20
+                )
             )
 
         try:
-            self.history_ws = self.sheet.worksheet(settings.GOOGLE_WORKSHEET_HISTORICO)
+            self.history_ws = retry_sync(
+                lambda: self.sheet.worksheet(settings.GOOGLE_WORKSHEET_HISTORICO)
+            )
         except gspread.exceptions.WorksheetNotFound:
-            self.history_ws = self.sheet.add_worksheet(
-                title=settings.GOOGLE_WORKSHEET_HISTORICO, rows=1000, cols=20
+            self.history_ws = retry_sync(
+                lambda: self.sheet.add_worksheet(
+                    title=settings.GOOGLE_WORKSHEET_HISTORICO, rows=1000, cols=20
+                )
             )
 
         self._ensure_headers()
@@ -70,9 +79,9 @@ class SheetsClient:
             "message_id",
         ]
 
-        current_inv = self.inventory_ws.row_values(1)
+        current_inv = retry_sync(lambda: self.inventory_ws.row_values(1))
         if not current_inv:
-            self.inventory_ws.append_row(inv_headers)
+            retry_sync(lambda: self.inventory_ws.append_row(inv_headers))
         elif "Erros" not in current_inv:
             # Migration needed logic handled by script usually
             pass
@@ -81,7 +90,7 @@ class SheetsClient:
 
     def upsert_inventory(self, item: InventoryItem):
         try:
-            cell = self.inventory_ws.find(item.local_id, in_column=1)
+            cell = retry_sync(lambda: self.inventory_ws.find(item.local_id, in_column=1))
             row_data = [
                 item.local_id,
                 item.sala,
@@ -104,12 +113,11 @@ class SheetsClient:
 
             if cell:
                 # Update existing
-                # Range updated to Q (17 cols)
                 cell_range = f"A{cell.row}:Q{cell.row}"
-                self.inventory_ws.update(range_name=cell_range, values=[row_data])
+                retry_sync(lambda: self.inventory_ws.update(range_name=cell_range, values=[row_data]))
             else:
                 # Insert new
-                self.inventory_ws.append_row(row_data)
+                retry_sync(lambda: self.inventory_ws.append_row(row_data))
 
             # Organize: Sort by Predio (3), Andar (4), Sala (2)
             # Organize: Sort by Predio (3), Andar (4), Sala (2)
@@ -122,8 +130,7 @@ class SheetsClient:
     def sort_inventory(self):
         try:
             # Sort by Predio (3), Andar (4), Sala (2)
-            # Range A2:O to skip header
-            self.inventory_ws.sort((3, "asc"), (4, "asc"), (2, "asc"), range="A2:O1000")
+            retry_sync(lambda: self.inventory_ws.sort((3, "asc"), (4, "asc"), (2, "asc"), range="A2:O1000"))
         except Exception as e:
             logger.warning(f"Sorting failed (api limit or other): {e}")
 
@@ -139,26 +146,26 @@ class SheetsClient:
                 item.mensagem_original,
                 item.message_id,
             ]
-            self.history_ws.append_row(row_data)
+            retry_sync(lambda: self.history_ws.append_row(row_data))
         except Exception as e:
             logger.error(f"Error adding history: {e}")
             raise e
 
     def get_all_records(self):
-        return self.inventory_ws.get_all_records()
+        return retry_sync(lambda: self.inventory_ws.get_all_records())
 
     def get_all_history(self) -> list[dict]:
-        return self.history_ws.get_all_records()
+        return retry_sync(lambda: self.history_ws.get_all_records())
 
     def delete_inventory_item(self, local_id: str) -> bool:
         """Remove a row from the inventory worksheet by local_id.
         Returns True if found and deleted, False if not found.
         """
         try:
-            cell = self.inventory_ws.find(local_id, in_column=1)
+            cell = retry_sync(lambda: self.inventory_ws.find(local_id, in_column=1))
             if not cell:
                 return False
-            self.inventory_ws.delete_rows(cell.row)
+            retry_sync(lambda: self.inventory_ws.delete_rows(cell.row))
             logger.info(f"Deleted inventory row for {local_id} (row {cell.row})")
             return True
         except Exception as e:
@@ -171,11 +178,10 @@ class SheetsClient:
         Returns Dict or None if not found.
         """
         try:
-            cell = self.inventory_ws.find(local_id, in_column=1)
+            cell = retry_sync(lambda: self.inventory_ws.find(local_id, in_column=1))
             if cell:
-                # Get all values for the row
-                row_values = self.inventory_ws.row_values(cell.row)
-                headers = self.inventory_ws.row_values(1)
+                row_values = retry_sync(lambda: self.inventory_ws.row_values(cell.row))
+                headers = retry_sync(lambda: self.inventory_ws.row_values(1))
 
                 # Create dict manually or use get_all_records approach (slower)
                 # Ensure row_values has enough columns (pad with empty strings)
