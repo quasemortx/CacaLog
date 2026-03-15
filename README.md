@@ -19,8 +19,8 @@ Sistema de monitoramento de inventário via WhatsApp, integrado com Evolution AP
 ## Instalação
 
 1. Clone o repo.
-2. Crie venv: `python -m venv venv` e ative.
-3. Instale deps: `pip install -r requirements.txt`.
+2. Crie venv: `python -m venv venv` e ative (No Windows: `.\venv\Scripts\activate`).
+3. Instale as dependências essenciais do backend: `pip install -r requirements.txt`.
 4. Copie `.env.example` para `.env` e preencha.
 5. Defina um `WEBHOOK_TOKEN` nas suas variáveis de ambiente ou no `.env`.
    O endpoint `POST /webhook` exige esse token no header `X-CACALOG-TOKEN`. Sem isso, retornará `401 Unauthorized`.

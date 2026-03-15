@@ -1,72 +1,95 @@
-import { type FC, useState } from "react";
+import { type FC, useState, useMemo } from "react";
 import { AppShell } from "@/components/layout/AppShell";
 import { useInventory } from "@/hooks/useInventory";
 import { LoadingState } from "@/components/common/LoadingState";
 import { ErrorState } from "@/components/common/ErrorState";
-import { EmptyState } from "@/components/common/EmptyState";
+import { type FilterState, InventoryFilters } from "@/components/inventory/InventoryFilters";
+import { InventoryTable } from "@/components/inventory/InventoryTable";
+import { InventoryDetailDrawer } from "@/components/inventory/InventoryDetailDrawer";
+import type { InventoryItem } from "@/types/inventory";
 
 export const InventoryPage: FC = () => {
-  const [searchTerm, setSearchTerm] = useState("");
-  const { data, isLoading, isError, error } = useInventory(
-    searchTerm ? { q: searchTerm } : undefined
-  );
+  const { data, isLoading, isError, error } = useInventory();
+  
+  const [filters, setFilters] = useState<FilterState>({
+    search: "",
+    status: "",
+    setor: "",
+    tipoAmbiente: "",
+    predio: "",
+    andar: "",
+  });
+
+  const [selectedItem, setSelectedItem] = useState<InventoryItem | null>(null);
+
+  // Safely default backend parsed items to an empty array
+  const rawItems = data?.items || [];
+
+  // 1. Calculate possible unique filter options from the whole dataset provided by the backend.
+  const uniqueStatuses = useMemo(() => Array.from(new Set(rawItems.map(i => i.Status || "NÃO AVALIADO"))).sort(), [rawItems]);
+  const uniqueSectores = useMemo(() => Array.from(new Set(rawItems.map(i => i.Setor || ""))).sort(), [rawItems]);
+  const uniqueAmbientes = useMemo(() => Array.from(new Set(rawItems.map(i => i.TipoAmbiente || "SALA"))).sort(), [rawItems]);
+  const uniquePredios = useMemo(() => Array.from(new Set(rawItems.map(i => String(i.Predio || "")))).filter(Boolean).sort(), [rawItems]);
+  const uniqueAndares = useMemo(() => Array.from(new Set(rawItems.map(i => String(i.Andar || "")))).filter(Boolean).sort(), [rawItems]);
+
+  // 2. Client-side filtering logic
+  const filteredItems = useMemo(() => {
+    return rawItems.filter(item => {
+      // Free Text Search
+      if (filters.search) {
+        const searchRegex = new RegExp(filters.search.replace(/[.*+?^${}()|[\]\\]/g, '\\$&'), "i");
+        const searchableText = `${item.local_id || ""} ${item.Sala || ""} ${item.Modelo || ""} ${item.Observacao || ""}`;
+        if (!searchRegex.test(searchableText)) return false;
+      }
+
+      // Exact Select Matches
+      if (filters.status && (item.Status || "NÃO AVALIADO") !== filters.status) return false;
+      if (filters.setor && (item.Setor || "") !== filters.setor) return false;
+      if (filters.tipoAmbiente && (item.TipoAmbiente || "SALA") !== filters.tipoAmbiente) return false;
+      if (filters.predio && String(item.Predio || "") !== filters.predio) return false;
+      if (filters.andar && String(item.Andar || "") !== filters.andar) return false;
+
+      return true;
+    });
+  }, [rawItems, filters]);
 
   return (
     <AppShell title="Inventário">
-      <div className="rounded-xl border bg-white shadow-sm dark:bg-slate-950 flex flex-col h-[700px]">
-        <div className="p-4 border-b flex items-center justify-between">
-          <div className="flex gap-2">
-            <input 
-              type="text" 
-              placeholder="Buscar por local, modelo..."
-              className="h-9 px-3 border rounded-md text-sm w-64 bg-slate-50 dark:bg-slate-900"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
-            />
-          </div>
-          <div className="text-sm font-medium text-slate-500 px-4">
-            {data?.items ? `${data.total} itens` : "0 itens"}
-          </div>
-        </div>
+      <div className="rounded-xl border bg-white shadow-sm dark:bg-slate-950 flex flex-col h-[80vh] min-h-[600px] overflow-hidden relative">
         
-        <div className="flex-1 overflow-auto">
+        {(!isLoading && !isError) && (
+          <InventoryFilters 
+            filters={filters}
+            setFilters={setFilters}
+            totalItems={rawItems.length}
+            filteredItemsCount={filteredItems.length}
+            uniqueStatuses={uniqueStatuses}
+            uniqueSectores={uniqueSectores}
+            uniqueAmbientes={uniqueAmbientes}
+            uniquePredios={uniquePredios}
+            uniqueAndares={uniqueAndares}
+          />
+        )}
+        
+        <div className="flex-1 overflow-auto bg-slate-50/50 dark:bg-slate-950/50 relative">
           {isLoading && <LoadingState message="Buscando lista de inventário..." />}
           {isError && <ErrorState error={error as Error} />}
-          {!isLoading && !isError && data?.items && data.items.length === 0 && (
-            <EmptyState message="Nenhuma máquina encontrada nos filtros indicados." />
-          )}
-          {!isLoading && !isError && data?.items && data.items.length > 0 && (
-             <div className="min-w-full inline-block align-middle">
-               <table className="min-w-full divide-y divide-slate-200 dark:divide-slate-800">
-                 <thead className="bg-slate-50 dark:bg-slate-900 sticky top-0">
-                   <tr>
-                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Local ID</th>
-                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Status</th>
-                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Setor</th>
-                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Observação</th>
-                     <th scope="col" className="px-6 py-3 text-left text-xs font-medium text-slate-500 uppercase tracking-wider">Atualizado</th>
-                   </tr>
-                 </thead>
-                 <tbody className="divide-y divide-slate-200 dark:divide-slate-800 bg-white dark:bg-slate-950">
-                    {data.items.map((item, i) => (
-                      <tr key={item.local_id || i} className="hover:bg-slate-50 dark:hover:bg-slate-900">
-                         <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-slate-900 dark:text-slate-100">{item.local_id || "-"}</td>
-                         <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">
-                           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 dark:bg-indigo-900 dark:text-indigo-200">
-                             {item.Status || "NÃO AVALIADO"}
-                           </span>
-                         </td>
-                         <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">{item.Setor || "-"}</td>
-                         <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400 truncate max-w-xs">{item.Observacao || "-"}</td>
-                         <td className="px-6 py-4 whitespace-nowrap text-sm text-slate-500 dark:text-slate-400">{item.UltimaAtualizacao || "-"}</td>
-                      </tr>
-                    ))}
-                 </tbody>
-               </table>
-             </div>
+          
+          {!isLoading && !isError && (
+             <InventoryTable 
+               items={filteredItems} 
+               onRowClick={(item) => setSelectedItem(item)}
+               selectedItemId={selectedItem?.local_id}
+             />
           )}
         </div>
       </div>
+
+      {/* Floating Detail Sidebar Drawer */}
+      <InventoryDetailDrawer 
+         item={selectedItem} 
+         onClose={() => setSelectedItem(null)} 
+      />
     </AppShell>
   );
 };
