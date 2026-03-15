@@ -63,3 +63,42 @@ export function normalizeSector(sector: string | undefined | null): string {
     if (!sector || sector.trim() === "") return "INDEFINIDO";
     return sector.toUpperCase().trim();
 }
+
+export function parseDateSafely(dateString: string | undefined | null): Date | null {
+  if (!dateString || dateString.trim() === "") return null;
+
+  if (dateString.includes("/")) {
+      const parts = dateString.split(" ");
+      const datePart = parts[0];
+      const dateParts = datePart.split("/");
+      if (dateParts.length === 3) {
+         const day = parseInt(dateParts[0], 10);
+         const month = parseInt(dateParts[1], 10) - 1;
+         const year = parseInt(dateParts[2], 10);
+         
+         let hours = 0, minutes = 0, seconds = 0;
+         if (parts.length > 1) {
+             const timePart = parts[1];
+             const timeParts = timePart.split(":");
+             if (timeParts.length >= 2) {
+                 hours = parseInt(timeParts[0], 10);
+                 minutes = parseInt(timeParts[1], 10);
+                 if (timeParts.length >= 3) {
+                     seconds = parseInt(timeParts[2], 10);
+                 }
+             }
+         }
+         
+         const parsed = new Date(year, month, day, hours, minutes, seconds);
+         return isNaN(parsed.getTime()) ? null : parsed;
+      }
+  } else if (dateString.includes("-")) {
+      const date = new Date(dateString.replace(" ", "T"));
+      if (!isNaN(date.getTime())) return date;
+  }
+
+  const exactDate = new Date(dateString);
+  if (!isNaN(exactDate.getTime())) return exactDate;
+  
+  return null;
+}
