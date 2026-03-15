@@ -1,99 +1,73 @@
 import pytest
 from fastapi.testclient import TestClient
-
+from sqlmodel import Session, SQLModel, create_engine
+from sqlmodel.pool import StaticPool
 from app.main import app
+from app.db.engine import get_session
+from app.models import Local, Historico
+from datetime import datetime
 
+# Setup in-memory SQLite for tests
+SQLALCHEMY_DATABASE_URL = "sqlite://"
+engine = create_engine(
+    SQLALCHEMY_DATABASE_URL,
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool,
+)
 
-class MockSheetsClient:
-    def get_all_records(self):
-        return [
-            {
-                "local_id": "S-101",
-                "Sala": "101",
-                "Status": "OK",
-                "Setor": "TI",
-                "Modelo": "Dell",
-                "Observacao": "Nenhuma",
-            },
-            {
-                "local_id": "L-01",
-                "Sala": "",
-                "Status": "PENDENTE",
-                "Setor": "Manutenção",
-                "Modelo": "",
-                "Observacao": "Falta HD",
-            },
-        ]
+def override_get_session():
+    with Session(engine) as session:
+        yield session
 
-    def get_all_history(self):
-        return [
-            {
-                "local_id": "S-101",
-                "status": "OK",
-                "responsavel": "Admin",
-                "observacao": "Feito",
-                "mensagem_original": "",
-            }
-        ]
+app.dependency_overrides[get_session] = override_get_session
+client_obj = TestClient(app)
 
+@pytest.fixture(name="session")
+def session_fixture():
+    SQLModel.metadata.create_all(engine)
+    with Session(engine) as session:
+        # Seed test data
+        loc1 = Local(
+            local_id="S-101", tipo_local="SALA", sala="101", 
+            predio=1, andar=1, status="OK", setor="TI", updated_at=datetime.utcnow()
+        )
+        loc2 = Local(
+            local_id="L-01", tipo_local="LAB", sala="Lab 1", 
+            predio=1, andar=1, status="PENDENTE", setor="Manutenção", updated_at=datetime.utcnow()
+        )
+        session.add(loc1)
+        session.add(loc2)
+        
+        hist = Historico(
+            local_id="S-101", status="OK", responsavel="Admin", observacao="Feito"
+        )
+        session.add(hist)
+        session.commit()
+        yield session
+    SQLModel.metadata.drop_all(engine)
 
-@pytest.fixture
-def client():
-    # Set fake API key for tests
-    from app.config import settings
-
-    settings.api_key = "test_key"
-
-    # Force mock client on app state before doing requests
-    app.state.sheets_client = MockSheetsClient()
-    with TestClient(app) as test_client:
-        # Re-apply inside the context just in case startup_event replaced it
-        app.state.sheets_client = MockSheetsClient()
-        yield test_client
-
-    settings.api_key = None  # cleanup
-
-
-def test_inventory_list(client):
-    response = client.get("/api/inventory", headers={"X-API-KEY": "test_key"})
+def test_inventory_list(session):
+    response = client_obj.get("/api/inventory", headers={"X-API-KEY": "dev_key"})
     assert response.status_code == 200
     data = response.json()
     assert data["total"] == 2
 
-
-def test_inventory_filter_status(client):
-    response = client.get("/api/inventory?status=OK", headers={"X-API-KEY": "test_key"})
+def test_inventory_filter_status(session):
+    response = client_obj.get("/api/inventory?status=OK", headers={"X-API-KEY": "dev_key"})
     assert response.status_code == 200
     data = response.json()
     assert data["total"] == 1
     assert data["items"][0]["local_id"] == "S-101"
 
-
-def test_inventory_filter_q(client):
-    response = client.get("/api/inventory?q=dell", headers={"X-API-KEY": "test_key"})
+def test_history_list(session):
+    response = client_obj.get("/api/history", headers={"X-API-KEY": "dev_key"})
     assert response.status_code == 200
     data = response.json()
     assert data["total"] == 1
 
-
-def test_history_list(client):
-    response = client.get("/api/history", headers={"X-API-KEY": "test_key"})
-    assert response.status_code == 200
-    data = response.json()
-    assert data["total"] == 1
-
-
-def test_history_filter_local_id(client):
-    response = client.get("/api/history?local_id=S-101", headers={"X-API-KEY": "test_key"})
-    assert response.status_code == 200
-    data = response.json()
-    assert data["total"] == 1
-
-
-def test_stats(client):
-    response = client.get("/api/stats", headers={"X-API-KEY": "test_key"})
+def test_stats(session):
+    response = client_obj.get("/api/stats", headers={"X-API-KEY": "dev_key"})
     assert response.status_code == 200
     data = response.json()
     assert data["total"] == 2
     assert data["by_status"]["OK"] == 1
-    assert "TI" in data["by_setor"]

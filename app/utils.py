@@ -4,7 +4,7 @@ import pytz
 
 
 def get_current_timestamp() -> str:
-    # ISO format or readable format for sheets
+    # ISO format or readable format for logs/db
     tz = pytz.timezone("America/Sao_Paulo")
     return datetime.now(tz).strftime("%Y-%m-%d %H:%M:%S")
 
@@ -13,7 +13,7 @@ def normalize_text(text: str) -> str:
     return text.strip().lower() if text else ""
 
 
-def sanitize_for_sheets(text: str) -> str:
+def sanitize_text_line(text: str) -> str:
     return text.replace("\n", " | ").replace("\r", "").strip()
 
 

@@ -25,12 +25,6 @@ class Settings(BaseSettings):
     # Banco de Dados
     DATABASE_URL: str = "postgresql://postgres:postgres@localhost:5432/cacalog"
 
-    # Sheets e API
-    GOOGLE_SERVICE_ACCOUNT_JSON_PATH: str = "./cacalog-daa224ea476d.json"
-    GOOGLE_SHEETS_ID: str = ""
-    GOOGLE_WORKSHEET_INVENTARIO: str = "Inventario"
-    GOOGLE_WORKSHEET_HISTORICO: str = "Historico"
-    
     # Auth e Evolution
     AUTHENTICATION_API_KEY: str | None = None
 

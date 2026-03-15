@@ -9,12 +9,10 @@ from app.schemas.enums import Status, TipoAmbiente
 from app.parser import REGEX_LAB, REGEX_SALA, extract_data_regex, normalize_status
 from app.redis_client import make_redis
 from app.security import require_webhook_token
-from app.utils import classify_sector, get_current_timestamp, sanitize_for_sheets
+from app.utils import classify_sector, get_current_timestamp, sanitize_text_line
 from app.whatsapp import send_message
 
 app = FastAPI(title="CaçaLog")
-app.state.sheets_client = None
-
 # CORS Middleware Setup
 origins = [o.strip() for o in settings.cors_origins.split(",") if o.strip()]
 
@@ -38,11 +36,6 @@ else:
 redis_conn = make_redis()
 deduper = Deduper(redis_conn)
 
-
-# Sheets instance (global or dependency)
-sheets_client = None
-
-
 @app.get("/")
 def read_root():
     return {"status": "CaçaLog Online ERP"}
@@ -50,19 +43,7 @@ def read_root():
 @app.on_event("startup")
 async def startup_event():
     configure_logging()
-    logger.info("Initializing system...")
-    
-    # Sheets Client (Descontinuado)
-    global sheets_client
-    try:
-        from app.sheets import SheetsClient
-        sheets_client = SheetsClient()
-        app.state.sheets_client = sheets_client
-        logger.info("Connected to Google Sheets (Legacy)")
-    except Exception as e:
-        logger.warning(
-            f"Failed to connect to Google Sheets. Running on purely DB mode: {e}"
-        )
+    logger.info("Initializing system (DB Only Mode)...")
 
 
 @app.get("/webhook")
@@ -219,12 +200,9 @@ async def process_message(
                         await send_message(reply_to_jid, f"⚠️ Local {local_id} não encontrado no banco.")
                 return
                 
-            # Legacy commands fallback
-            if sheets_client:
-                response = handle_command(parts[0], args, sheets_client)
-                await send_message(reply_to_jid, response)
-            else:
-                await send_message(reply_to_jid, "⚠️ Comandos legados desativados nesta versão da API.")
+            # Legacy commands fallback (Now redirected to DB commands)
+            response = handle_command(parts[0], args)
+            await send_message(reply_to_jid, response)
                 
         except Exception as e:
             logger.error(f"Error processing command '{clean_text}': {e}")
@@ -259,7 +237,7 @@ async def process_message(
             local_id = item["local_id"]
             logger.info(f"Processing item: {local_id} | status={current_status}")
 
-            sanitized_obs = sanitize_for_sheets(item.get("observacao", ""))
+            sanitized_obs = sanitize_text_line(item.get("observacao", ""))
 
             # Machine Types processing
             machine_types = item.get("machine_types")
@@ -277,8 +255,6 @@ async def process_message(
                         sanitized_obs += f" | {types_str}"
                     else:
                         sanitized_obs = types_str
-
-            sector_resp = classify_sector(current_status.value, sanitized_obs)
 
             sector_resp = classify_sector(current_status.value, sanitized_obs)
 
