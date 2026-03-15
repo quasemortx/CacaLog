@@ -8,6 +8,15 @@ router = APIRouter(prefix="/api", dependencies=[Depends(require_api_key)])
 def get_sheets_client(request: Request):
     client = getattr(request.app.state, "sheets_client", None)
     if not client:
+        # Fallback to global instance if state is somehow cleared
+        try:
+            from app.main import sheets_client as global_client
+            client = global_client
+            request.app.state.sheets_client = client
+        except ImportError:
+            pass
+            
+    if not client:
         raise HTTPException(status_code=503, detail="Sheets connection not available")
     return client
 
