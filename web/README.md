@@ -16,15 +16,24 @@ O propósito do *Web Panel* está em apresentar os dados do Inventário e o Hist
 
 Certifique-se de ter o NodeJS instalado na sua máquina. A partir do diretório `/web` do projeto CaçaLog:
 
-1. **Instale as dependências:**
+1. **Configurar as Variáveis de Ambiente:**
+   Copie o arquivo amigável:
+   ```bash
+   cp .env.example .env
+   ```
+   > Certifique-se de preencher `VITE_API_KEY` com o valor de `API_KEY` rodando no seu servidor Backend.
+
+2. **Instale as dependências:**
    ```bash
    npm install
    ```
 
-2. **Suba o Servidor de Desenvolvimento:**
+3. **Suba o Servidor de Desenvolvimento:**
    ```bash
    npm run dev
    ```
+
+   > **NOTA:** O painel consumirá a porta 8000. Para que as telas funcionem e não exibam `ErrorState`, o backend FastAPI (`uvicorn app.main:...`) deve estar estar simultâneamente sendo executado!
 
 O painel ficará disponível interativamente, geralmente em `http://localhost:5173`. 
 
