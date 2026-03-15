@@ -1,15 +1,16 @@
 # CaçaLog MVP
 
-Sistema de monitoramento de inventário via WhatsApp, integrado com Evolution API e Google Sheets.
+Sistema de monitoramento de inventário via WhatsApp, integrado com Evolution API e Banco de Dados PostgreSQL.
 
 ## Funcionalidades
 - Monitora mensagens de um grupo específico.
 - Identifica Salas (Ex: S-712) e Laboratórios (Ex: L-03).
 - Extrai status via Regex (rápido e robusto).
-- Persiste dados em Google Sheets (Abas Inventario e Historico).
-  - Inclui sistema de _retry/backoff_ automático, tolerando falhas de rede com a API da Google de maneira transparente e segura para os logs.
+- Persiste dados em Banco Relacional (PostgreSQL via SQLModel).
+  - Modelagem avançada de Locais e múltiplas Máquinas por ambiente.
+  - Auditoria completa via tabela de Histórico.
 - Comandos Slash (/status, /resumo, /lab).
-- API REST para Painéis de visualização (Read-Only) assegurada pelo header `X-API-KEY`.
+- API REST Completa (CRUD) para Painéis de visualização e administração assegurada pelo header `X-API-KEY`.
 
 ## Pré-requisitos
 - Python 3.11+
