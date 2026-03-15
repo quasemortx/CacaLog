@@ -22,11 +22,13 @@ Sistema de monitoramento de inventário via WhatsApp, integrado com Evolution AP
 2. Crie venv: `python -m venv .venv` e ative (No Windows: `.\.venv\Scripts\activate`).
 3. Instale as dependências: `pip install -r requirements.txt`.
 4. Copie `.env.example` para `.env` e ajuste `DATABASE_URL` para o seu PostgreSQL local:
-   `DATABASE_URL=postgresql://postgres:sua_senha@localhost:5432/cacalog`
-5. Suba seu banco de dados (ex: `docker run -d -p 5432:5432 -e POSTGRES_PASSWORD=sua_senha postgres`)
+   `DATABASE_URL=postgresql://postgres:postgres@localhost:5432/cacalog`
+5. Suba seu conteiner com banco de dados criado (usando POSTGRES_DB=cacalog):
+   `docker run -d --name cacalog-db -p 5432:5432 -e POSTGRES_PASSWORD=postgres -e POSTGRES_DB=cacalog postgres:15-alpine`
 6. Rode as migrations do banco de dados: `alembic upgrade head`
 7. Gere os dados de teste / seed: `python -m app.db.init_db`
-8. Defina um `WEBHOOK_TOKEN` e `AUTHENTICATION_API_KEY` para uso.
+8. Suba o servidor backend: `uvicorn app.main:app --reload`
+9. (Opcional) Defina um `WEBHOOK_TOKEN` e `AUTHENTICATION_API_KEY` para uso em chamadas externas.
 
 ## Execução (Dev / Prod)
 
@@ -54,14 +56,47 @@ pytest
 ```
 
 ## Estrutura
-- `app/api.py`: Roteamento da API e injeção do Banco.
+- `app/api.py`: Roteamento da API (agora com CRUD completo de locais/máquinas).
 - `app/config.py`: Variáveis de ambiente (`DATABASE_URL`, tokens).
 - `app/db/`: Conexões com banco (`engine.py`) e script seed (`init_db.py`).
 - `app/models/`: Definições SQLModel de `Local`, `Maquina`, `Historico`.
-- `app/schemas/`: Esquemas de resposta da API para o frontend.
-- `app/services/`: Lógica de extração e resposta que abstrai o repositório de dados.
+- `app/repositories/`: Camada de acesso a dados.
+- `app/schemas/`: Esquemas de resposta da API e validação Pydantic.
+- `app/services/`: Lógica de negócio e coordenação de histórico.
 - `app/parser.py`: Lógica Regex de extração do WhatsApp.
 - `db_migrations/`: Migrations gerenciadas pelo Alembic.
+
+## API CRUD (Painel Administrativo)
+
+### Locais
+- `POST /api/locais`: Cria novo local.
+- `GET /api/locais/{local_id}`: Retorna dados do local e suas máquinas.
+- `PUT /api/locais/{local_id}`: Atualiza campos do local.
+
+Exemplo Payload (POST /api/locais):
+```json
+{
+  "local_id": "L-05",
+  "tipo_local": "LAB",
+  "predio": 1,
+  "status": "OK"
+}
+```
+
+### Máquinas
+- `POST /api/locais/{local_id}/maquinas`: Adiciona modelo de máquina ao local.
+- `PUT /api/maquinas/{maquina_id}`: Atualiza dados da máquina.
+- `DELETE /api/maquinas/{maquina_id}`: Remove a máquina.
+
+Exemplo Payload (POST /api/locais/L-05/maquinas):
+```json
+{
+  "modelo": "Dell Optiplex 3040",
+  "quantidade": 20,
+  "propriedade": "PROPRIO"
+}
+```
+
 
 ## Comandos do Bot
 - `/status [sala]`

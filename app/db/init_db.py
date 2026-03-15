@@ -8,7 +8,7 @@ logger = logging.getLogger(__name__)
 def init_db():
     with Session(engine) as session:
         # Check if already seeded
-        local_exists = session.exec(select(Local).first()).first()
+        local_exists = session.exec(select(Local)).first()
         if local_exists:
             logger.info("Database already seeded.")
             print("Database already seeded.")

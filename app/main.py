@@ -361,8 +361,14 @@ async def process_message(
 
 
 @app.get("/health")
-def health():
-    return {"status": "ok", "db_connected": True}
+def health(session: Session = Depends(get_session)):
+    try:
+        from sqlmodel import text
+        session.exec(text("SELECT 1"))
+        db_ok = True
+    except Exception:
+        db_ok = False
+    return {"status": "ok", "db_connected": db_ok}
 
 
 # Registrar router da API no final para evitar circulares ou usar injeção seprada
