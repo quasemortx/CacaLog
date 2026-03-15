@@ -29,7 +29,7 @@ export const InventoryDetailDrawer: FC<InventoryDetailDrawerProps> = ({ item, on
         {icon && <span className="opacity-70">{icon}</span>}
         {label}
       </span>
-      <span className="text-sm text-slate-900 dark:text-slate-100 font-medium">
+      <span className="text-sm text-slate-900 dark:text-slate-100 font-medium break-words">
         {value === undefined || value === null || value === "" ? <span className="text-slate-300 dark:text-slate-600">—</span> : value}
       </span>
     </div>
@@ -121,7 +121,7 @@ export const InventoryDetailDrawer: FC<InventoryDetailDrawerProps> = ({ item, on
                 <span className="text-xs font-medium text-slate-500 flex items-center gap-1.5 mb-2">
                    <MessageSquare className="w-3.5 h-3.5" /> Observação Central
                 </span>
-                <p className="text-sm font-medium text-slate-800 dark:text-slate-200 leading-relaxed">
+                <p className="text-sm font-medium text-slate-800 dark:text-slate-200 leading-relaxed break-words whitespace-pre-wrap">
                    {item.Observacao || <span className="text-slate-400 italic">Sem observações.</span>}
                 </p>
              </div>
@@ -134,9 +134,9 @@ export const InventoryDetailDrawer: FC<InventoryDetailDrawerProps> = ({ item, on
                 Rastreamento
              </h3>
              <div className="space-y-1">
-                <DetailRow label="Última Atualização no Banco" value={formatDate(item.UltimaAtualizacao)} />
-                <DetailRow label="Responsável Relator" value={item.UltimoResponsavel} icon={<Mail className="w-3.5 h-3.5" />} />
-                <DetailRow label="Via Contato / WhatsApp" value={item.UltimoContato} />
+                <DetailRow label="Atualizado Em" value={formatDate(item.UltimaAtualizacao)} />
+                <DetailRow label="Técnico" value={item.UltimoResponsavel} icon={<Mail className="w-3.5 h-3.5" />} />
+                <DetailRow label="Contato" value={item.UltimoContato} />
              </div>
            </section>
         </div>

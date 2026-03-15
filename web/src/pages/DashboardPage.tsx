@@ -50,8 +50,8 @@ export const DashboardPage: FC = () => {
           <div className="p-6">
             <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
               {Object.entries(data.by_status).map(([status, count]) => (
-                <div key={status} className="border p-4 rounded-lg bg-slate-50 dark:bg-slate-900">
-                  <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">{status}</span>
+                <div key={status} className="border p-4 rounded-lg bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+                  <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wider break-words">{status}</span>
                   <span className="block mt-1 text-xl font-bold text-slate-700 dark:text-slate-200">{count}</span>
                 </div>
               ))}
@@ -67,8 +67,8 @@ export const DashboardPage: FC = () => {
             <div className="p-6">
               <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 {Object.entries(data.by_setor).map(([setor, count]) => (
-                  <div key={setor} className="border p-4 rounded-lg bg-slate-50 dark:bg-slate-900">
-                    <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wider">{setor}</span>
+                  <div key={setor} className="border p-4 rounded-lg bg-slate-50 dark:bg-slate-900 border-slate-200 dark:border-slate-800">
+                    <span className="block text-xs font-semibold text-slate-500 uppercase tracking-wider break-words">{setor}</span>
                     <span className="block mt-1 text-xl font-bold text-slate-700 dark:text-slate-200">{count}</span>
                   </div>
                 ))}

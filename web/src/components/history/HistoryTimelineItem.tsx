@@ -34,10 +34,10 @@ export const HistoryTimelineItem: FC<HistoryTimelineItemProps> = ({ item }) => {
       </div>
 
       {/* Content */}
-      <div className="flex-1 pb-8">
+      <div className="flex-1 min-w-0 pb-8">
         <div className="bg-white dark:bg-slate-950 border border-slate-200 dark:border-slate-800 rounded-xl p-4 shadow-sm hover:shadow transition-shadow">
            <div className="flex flex-col sm:flex-row sm:justify-between sm:items-start gap-2 mb-3">
-             <div className="flex items-center gap-3">
+             <div className="flex flex-wrap items-center gap-3">
                <span className="text-base font-bold text-slate-800 dark:text-slate-100 bg-slate-50 dark:bg-slate-900 px-2 py-0.5 rounded border border-slate-100 dark:border-slate-800">
                  {item.local_id || "SISTEMA/GERAL"}
                </span>
@@ -50,7 +50,7 @@ export const HistoryTimelineItem: FC<HistoryTimelineItemProps> = ({ item }) => {
            </div>
 
            <div className="mb-3">
-             <p className="text-sm font-medium text-slate-700 dark:text-slate-300 leading-relaxed max-w-3xl">
+             <p className="text-sm font-medium text-slate-700 dark:text-slate-300 leading-relaxed max-w-3xl break-words whitespace-pre-wrap">
                {item.observacao || <span className="text-slate-400 italic font-normal">Nenhuma observação reportada.</span>}
              </p>
            </div>
@@ -80,7 +80,7 @@ export const HistoryTimelineItem: FC<HistoryTimelineItemProps> = ({ item }) => {
                  </button>
                  
                  {expanded && (
-                    <div className="mt-2 p-2.5 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded font-mono text-[10px] sm:text-xs text-slate-600 dark:text-slate-400 overflow-x-auto whitespace-pre-wrap">
+                    <div className="mt-2 p-3 bg-slate-50 dark:bg-slate-900 border border-slate-100 dark:border-slate-800 rounded font-mono text-[11px] sm:text-xs text-slate-600 dark:text-slate-400 overflow-x-auto whitespace-pre-wrap break-words max-h-60 overflow-y-auto">
                       {item.mensagem_original}
                     </div>
                  )}
