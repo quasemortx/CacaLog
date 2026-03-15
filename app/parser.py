@@ -1,7 +1,7 @@
 import re
 from typing import Any
 
-from app.models import Status, TipoAmbiente
+from app.schemas.enums import Status, TipoAmbiente
 
 # Regex compilado para Salas
 # Prédio 1: 3 dígitos, Andar = 1º dígito.

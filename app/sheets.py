@@ -3,7 +3,7 @@ from oauth2client.service_account import ServiceAccountCredentials
 
 from app.config import settings
 from app.logging_conf import logger
-from app.models import HistoryItem, InventoryItem
+from app.schemas.legacy import HistoryItem, InventoryItem
 from app.retry import retry_sync
 
 SCOPES = [

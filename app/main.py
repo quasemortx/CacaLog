@@ -5,7 +5,7 @@ from app.commands import handle_command
 from app.config import settings
 from app.dedup import Deduper
 from app.logging_conf import configure_logging, logger
-from app.models import HistoryItem, InventoryItem, Status, TipoAmbiente
+from app.schemas.enums import Status, TipoAmbiente
 from app.parser import REGEX_LAB, REGEX_SALA, extract_data_regex, normalize_status
 from app.redis_client import make_redis
 from app.security import require_webhook_token
@@ -45,22 +45,23 @@ sheets_client = None
 
 @app.get("/")
 def read_root():
-    return {"status": "CaçaLog Online", "sheets_connected": sheets_client is not None}
-
+    return {"status": "CaçaLog Online ERP"}
 
 @app.on_event("startup")
 async def startup_event():
     configure_logging()
+    logger.info("Initializing system...")
+    
+    # Sheets Client (Descontinuado)
     global sheets_client
     try:
         from app.sheets import SheetsClient
-
         sheets_client = SheetsClient()
         app.state.sheets_client = sheets_client
-        logger.info("Connected to Google Sheets")
+        logger.info("Connected to Google Sheets (Legacy)")
     except Exception as e:
-        logger.critical(
-            f"Failed to connect to Google Sheets. App is running, but sheets integration will fail: {e}"
+        logger.warning(
+            f"Failed to connect to Google Sheets. Running on purely DB mode: {e}"
         )
 
 
@@ -185,27 +186,46 @@ async def process_message(
             parts = clean_text.split()
             cmd = parts[0].lower()
             args = parts[1:]
-            # Admin-only commands
+            
             if cmd in ["/deletar"] and not is_admin:
                 await send_message(reply_to_jid, "⛔ Apenas o admin pode usar este comando.")
                 return
-            response = handle_command(parts[0], args, sheets_client)
-            # Record deletion in history for traceability
-            if cmd == "/deletar" and response and "removido" in response:
+            
+            # Using new DB logic for delete
+            from app.db.engine import SessionLocal
+            from app.models import Local, Historico
+            from sqlmodel import select
+            
+            if cmd == "/deletar":
                 local_id = args[0].upper() if args else ""
-                if local_id:
-                    hist_item = HistoryItem(
-                        timestamp=get_current_timestamp(),
-                        local_id=local_id,
-                        status="DELETADO",
-                        observacao="Removido via comando /deletar",
-                        responsavel=push_name,
-                        contato=sender_num,
-                        mensagem_original=clean_text,
-                        message_id=msg_id,
-                    )
-                    sheets_client.add_history(hist_item)
-            await send_message(reply_to_jid, response)
+                with SessionLocal() as db:
+                    loc = db.exec(select(Local).where(Local.local_id == local_id)).first()
+                    if loc:
+                        db.delete(loc)
+                        
+                        hist_item = Historico(
+                            local_id=local_id,
+                            status="DELETADO",
+                            observacao="Removido via comando /deletar",
+                            responsavel=push_name,
+                            contato=sender_num,
+                            mensagem_original=clean_text,
+                            message_id=msg_id,
+                        )
+                        db.add(hist_item)
+                        db.commit()
+                        await send_message(reply_to_jid, f"✅ {local_id} deletado com sucesso do banco de dados (Novo).")
+                    else:
+                        await send_message(reply_to_jid, f"⚠️ Local {local_id} não encontrado no banco.")
+                return
+                
+            # Legacy commands fallback
+            if sheets_client:
+                response = handle_command(parts[0], args, sheets_client)
+                await send_message(reply_to_jid, response)
+            else:
+                await send_message(reply_to_jid, "⚠️ Comandos legados desativados nesta versão da API.")
+                
         except Exception as e:
             logger.error(f"Error processing command '{clean_text}': {e}")
             await send_message(reply_to_jid, "⚠️ Erro ao processar comando.")
@@ -260,68 +280,72 @@ async def process_message(
 
             sector_resp = classify_sector(current_status.value, sanitized_obs)
 
-            inv_item = InventoryItem(
-                local_id=local_id,
-                sala=item.get("sala", ""),
-                predio=item.get("predio"),
-                andar=item.get("andar"),
-                tipo_ambiente=TipoAmbiente(item.get("tipo_ambiente", "SALA")),
-                modelo=item.get("modelo"),
-                bios=item.get("bios"),
-                status=current_status,
-                observacao=sanitized_obs,
-                setor_responsavel=sector_resp,
-                total_pcs=item.get("total_pcs", 1 if "S-" in local_id else 0),
-                concluidos=item.get("concluidos", 0),
-                pendentes=item.get("pendentes", 0),
-                ultimo_responsavel=push_name,
-                ultimo_contato=sender_num,
-                ultima_atualizacao=get_current_timestamp(),
-            )
+            sector_resp = classify_sector(current_status.value, sanitized_obs)
 
-            logger.info(f"Calling sheets for {local_id}...")
-            existing_item = sheets_client.get_inventory_item(local_id)
+            # DB Write
+            from app.db.engine import SessionLocal
+            from app.models import Local, Historico
+            from sqlmodel import select
+            from datetime import datetime
+            
+            with SessionLocal() as db:
+                loc = db.exec(select(Local).where(Local.local_id == local_id)).first()
+                if not loc:
+                    total = item.get("total_pcs", 1 if "S-" in local_id else 0)
+                    loc = Local(
+                        local_id=local_id,
+                        sala=item.get("sala", ""),
+                        tipo_local="SALA" if "S-" in local_id else "LAB",
+                        predio=item.get("predio"),
+                        andar=item.get("andar"),
+                        tipo_ambiente=item.get("tipo_ambiente", "SALA"),
+                        status=current_status.value,
+                        observacao=sanitized_obs,
+                        setor=sector_resp,
+                        ultimo_responsavel=push_name,
+                        ultimo_contato=sender_num,
+                        updated_at=datetime.utcnow()
+                    )
+                    db.add(loc)
+                else:
+                    if current_status == Status.NAO_AVALIADO:
+                        # restore status safely
+                        current_status = Status(loc.status) if loc.status else Status.NAO_AVALIADO
+                        
+                    loc.status = current_status.value
+                    if sanitized_obs:
+                        loc.observacao = sanitized_obs
+                    loc.ultimo_responsavel = push_name
+                    loc.ultimo_contato = sender_num
+                    loc.updated_at = datetime.utcnow()
+                    db.add(loc)
+                    
+                db.commit()
+                db.refresh(loc)
+                
+                hist_item = Historico(
+                    local_ref_id=loc.id,
+                    local_id=loc.local_id,
+                    status=current_status.value,
+                    observacao=sanitized_obs,
+                    responsavel=push_name,
+                    contato=sender_num,
+                    mensagem_original=clean_text,
+                    message_id=msg_id,
+                )
+                db.add(hist_item)
+                db.commit()
 
-            if existing_item:
-                if current_status == Status.NAO_AVALIADO:
-                    import contextlib
-
-                    with contextlib.suppress(KeyError, ValueError):
-                        old_s_str = existing_item.get("Status", "").upper()
-                        if old_s_str in Status.__members__:
-                            current_status = Status[old_s_str]
-                if not item.get("modelo") and existing_item.get("Modelo"):
-                    inv_item.modelo = existing_item.get("Modelo")
-
-            if current_status == Status.NAO_AVALIADO and existing_item:
-                msg_reply = f"[Info] *{local_id} está {existing_item.get('Status')}* ({existing_item.get('Modelo') or 'Modelo não def.'}).\nObs: {existing_item.get('Observacao') or '-'}"
-                await send_message(reply_to_jid, msg_reply)
-                return
-
-            logger.info(f"Upserting {local_id} with status {current_status}...")
-            sheets_client.upsert_inventory(inv_item)
-
-            hist_item = HistoryItem(
-                timestamp=get_current_timestamp(),
-                local_id=inv_item.local_id,
-                status=current_status.value,
-                observacao=sanitized_obs,
-                responsavel=push_name,
-                contato=sender_num,
-                mensagem_original=clean_text,
-                message_id=msg_id,
-            )
-            sheets_client.add_history(hist_item)
-            logger.info(f"✅ Saved {local_id} -> {current_status.value}")
+            logger.info(f"✅ Saved {local_id} -> {current_status.value} (DB)")
 
             if current_status == Status.NAO_AVALIADO:
                 await send_message(
                     reply_to_jid,
-                    f"Qual o status de {inv_item.local_id}?\nOpções: ✅, pendente, erro, incompatível.",
+                    f"Qual o status de {local_id}?\nOpções: ✅, pendente, erro, incompatível.",
                 )
             else:
                 results_msg.append(
-                    f"✅ {inv_item.local_id} atualizado para {current_status.value}."
+                    f"✅ {local_id} atualizado para {current_status.value}."
                 )
 
         except Exception as e:
@@ -338,7 +362,7 @@ async def process_message(
 
 @app.get("/health")
 def health():
-    return {"status": "ok", "sheets_connected": sheets_client is not None}
+    return {"status": "ok", "db_connected": True}
 
 
 # Registrar router da API no final para evitar circulares ou usar injeção seprada

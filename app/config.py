@@ -22,6 +22,9 @@ class Settings(BaseSettings):
     whatsapp_instance: str | None = None
     redis_url: str | None = None
 
+    # Banco de Dados
+    DATABASE_URL: str = "postgresql://postgres:postgres@localhost:5432/cacalog"
+
     # Sheets e API
     GOOGLE_SERVICE_ACCOUNT_JSON_PATH: str = "./cacalog-daa224ea476d.json"
     GOOGLE_SHEETS_ID: str = ""
