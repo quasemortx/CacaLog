@@ -1,4 +1,5 @@
 import { type FC, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import type { InventoryItem } from '@/types/inventory';
 import { StatusBadge } from './StatusBadge';
 import { SectorBadge } from './SectorBadge';
@@ -11,6 +12,7 @@ interface InventoryDetailDrawerProps {
 }
 
 export const InventoryDetailDrawer: FC<InventoryDetailDrawerProps> = ({ item, onClose }) => {
+  const navigate = useNavigate();
   
   // Close on Escape key press
   useEffect(() => {
@@ -142,7 +144,16 @@ export const InventoryDetailDrawer: FC<InventoryDetailDrawerProps> = ({ item, on
         </div>
         
         {/* Footer */}
-        <div className="border-t p-4 bg-slate-50 dark:bg-slate-900 flex justify-end absolute bottom-0 w-full">
+        <div className="border-t p-4 bg-slate-50 dark:bg-slate-900 flex justify-between absolute bottom-0 w-full">
+           <button 
+             onClick={() => {
+               onClose();
+               navigate(`/locais/${item.local_id}/editar`);
+             }}
+             className="px-4 py-2 bg-white dark:bg-slate-800 border-2 border-indigo-600 text-indigo-700 dark:text-indigo-400 hover:bg-indigo-50 dark:hover:bg-slate-700 rounded-md text-sm font-bold transition-colors"
+           >
+             Editar Local
+           </button>
            <button 
              onClick={onClose}
              className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-sm font-medium transition-colors"
