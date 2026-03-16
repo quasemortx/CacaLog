@@ -12,30 +12,33 @@ export async function fetchApi<T>(endpoint: string, options: RequestInit = {}): 
     headers.set("X-API-KEY", API_KEY);
   }
 
+  let response: Response;
+
   try {
-    const response = await fetch(url, { ...options, headers });
-    
-    if (!response.ok) {
-      let errorMsg = `HTTP Error ${response.status}: ${response.statusText}`;
-      try {
-        const errorBody = await response.json();
-        if (errorBody && errorBody.detail) {
-          errorMsg = `API Error: ${errorBody.detail}`;
-        }
-      } catch (e) {
-        // Body was probably not JSON, ignore parsing error
-      }
-      throw new Error(errorMsg);
-    }
-    
-    return await response.json();
-  } catch (error) {
-    if (error instanceof Error) {
-      if (error.name === "TypeError" && error.message.includes("Failed to fetch")) {
-        throw new Error("Erro de rede: O servidor backend (FastAPI) parece estar offline, inacessível ou bloqueado por CORS.");
-      }
-      throw error;
-    }
-    throw new Error("Ocorreu um erro desconhecido ao comunicar com a API.");
+    response = await fetch(url, { ...options, headers });
+  } catch (networkError) {
+    // Erro de rede puro: servidor offline, CORS bloqueando preflight, ou URL errada
+    console.error("[fetchApi] Falha de rede ao conectar em:", url, networkError);
+    throw new Error(
+      `Erro de rede: não foi possível alcançar o backend em ${API_URL}. ` +
+      `Verifique se o uvicorn está rodando na porta correta.`
+    );
   }
+
+  if (!response.ok) {
+    let detail = "";
+    try {
+      const body = await response.json();
+      detail = body?.detail || JSON.stringify(body);
+    } catch {
+      // body não é JSON
+    }
+    const msg = detail
+      ? `[${response.status}] ${detail}`
+      : `[${response.status}] ${response.statusText}`;
+    console.error("[fetchApi] Erro HTTP:", url, msg);
+    throw new Error(msg);
+  }
+  
+  return await response.json();
 }

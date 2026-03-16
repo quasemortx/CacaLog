@@ -34,6 +34,7 @@ services:
       redis:
         condition: service_healthy
 
+  # ─── Banco da Evolution API (interno) ────────────────────────────────────────
   postgres:
     image: postgres:15-alpine
     container_name: evolution_postgres
@@ -46,6 +47,25 @@ services:
       - postgres_data:/var/lib/postgresql/data
     healthcheck:
       test: [ "CMD-SHELL", "pg_isready -U evolution -d evolution" ]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  # ─── Banco do CaçaLog Backend (exposto para uso local) ───────────────────────
+  cacalog_db:
+    image: postgres:15-alpine
+    container_name: cacalog_postgres
+    restart: always
+    ports:
+      - "5432:5432"
+    environment:
+      - POSTGRES_USER=postgres
+      - POSTGRES_PASSWORD=postgres
+      - POSTGRES_DB=cacalog
+    volumes:
+      - cacalog_db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d cacalog" ]
       interval: 5s
       timeout: 3s
       retries: 20
@@ -70,3 +90,4 @@ volumes:
   evolution_store:
   postgres_data:
   redis_data:
+  cacalog_db_data:
