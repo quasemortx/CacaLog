@@ -1,4 +1,5 @@
 import { type FC, useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { AppShell } from "@/components/layout/AppShell";
 import { useInventory } from "@/hooks/useInventory";
 import { LoadingState } from "@/components/common/LoadingState";
@@ -9,6 +10,7 @@ import { InventoryDetailDrawer } from "@/components/inventory/InventoryDetailDra
 import type { InventoryItem } from "@/types/inventory";
 
 export const InventoryPage: FC = () => {
+  const navigate = useNavigate();
   const { data, isLoading, isError, error } = useInventory();
   
   const [filters, setFilters] = useState<FilterState>({
@@ -55,7 +57,16 @@ export const InventoryPage: FC = () => {
 
   return (
     <AppShell title="Inventário">
-      <div className="rounded-xl border bg-white shadow-sm dark:bg-slate-950 flex flex-col h-[80vh] min-h-[600px] overflow-hidden relative">
+      <div className="flex justify-between items-center mb-4">
+        <div></div>
+        <button 
+          onClick={() => navigate('/locais/novo')}
+          className="px-4 py-2 bg-indigo-600 hover:bg-indigo-700 text-white rounded-md text-sm font-medium transition-colors"
+        >
+          Novo Local
+        </button>
+      </div>
+      <div className="rounded-xl border bg-white shadow-sm dark:bg-slate-950 flex flex-col h-[75vh] min-h-[550px] overflow-hidden relative">
         
         {(!isLoading && !isError) && (
           <InventoryFilters 

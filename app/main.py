@@ -10,13 +10,18 @@ from app.parser import REGEX_LAB, REGEX_SALA, extract_data_regex, normalize_stat
 from app.redis_client import make_redis
 from app.security import require_webhook_token
 from app.utils import classify_sector, get_current_timestamp, sanitize_text_line
+from sqlmodel import Session
 from app.whatsapp import send_message
+from app.db.engine import get_session
 
 app = FastAPI(title="CaçaLog")
 # CORS Middleware Setup
-origins = [o.strip() for o in settings.cors_origins.split(",") if o.strip()]
+# IMPORTANTE: allow_credentials=True + allow_origins=["*"] é inválido pela spec CORS
+# e causa bloqueio silencioso no browser. Sem wildcard, usamos lista de origens.
+raw_origins = settings.cors_origins.strip()
 
-if "*" in origins:
+if raw_origins == "*":
+    # Modo permissivo (dev local): aceita qualquer origem, sem credentials por segurança
     app.add_middleware(
         CORSMiddleware,
         allow_origins=["*"],
@@ -25,6 +30,11 @@ if "*" in origins:
         allow_headers=["*"],
     )
 else:
+    origins = [o.strip() for o in raw_origins.split(",") if o.strip()]
+    # Garante que as origens do frontend local estejam sempre presentes
+    for dev_origin in ["http://localhost:5173", "http://127.0.0.1:5173"]:
+        if dev_origin not in origins:
+            origins.append(dev_origin)
     app.add_middleware(
         CORSMiddleware,
         allow_origins=origins,
